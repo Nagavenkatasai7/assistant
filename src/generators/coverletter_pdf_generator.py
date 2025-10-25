@@ -52,8 +52,9 @@ class CoverLetterPDFGenerator:
         # Parse and add content
         lines = cover_letter_text.strip().split('\n')
 
-        in_header = True
-        in_recipient = False
+        in_date_section = True
+        in_sender_section = False
+        in_recipient_section = False
         paragraph_buffer = []
 
         for line in lines:
@@ -69,30 +70,46 @@ class CoverLetterPDFGenerator:
                     paragraph_buffer = []
                 continue
 
-            # Header section (sender contact info)
-            if in_header and not stripped.startswith('[') and not re.match(r'\d{1,2}/\d{1,2}/\d{4}', stripped):
-                # Contact info lines
-                if '|' in stripped or '@' in stripped or 'linkedin.com' in stripped.lower():
-                    # Format contact line with clickable links
+            # Date line (first line)
+            if in_date_section and (re.match(r'\d{1,2}/\d{1,2}/\d{4}', stripped) or re.match(r'[A-Z][a-z]+ \d{1,2}, \d{4}', stripped)):
+                story.append(Paragraph(stripped, styles['body']))
+                story.append(Spacer(1, 0.2*inch))  # Space after date
+                in_date_section = False
+                in_sender_section = True
+                continue
+
+            # Sender section (name, address, phone, email, LinkedIn)
+            if in_sender_section:
+                if stripped.startswith('Dear'):
+                    # End of sender + recipient, start of greeting
+                    in_sender_section = False
+                    story.append(Spacer(1, 0.1*inch))
+                    story.append(Paragraph(stripped, styles['body']))
+                    story.append(Spacer(1, 0.15*inch))
+                    continue
+                elif not any(char in stripped for char in ['@', 'linkedin', 'github', 'portfolio']) and \
+                     not re.match(r'^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$', stripped):
+                    # Check if this might be recipient section (company name after sender info)
+                    # Look for patterns like company names, titles (Hiring Manager, etc.)
+                    if any(keyword in stripped.lower() for keyword in ['hiring manager', 'company', 'inc', 'llc', 'corp']):
+                        in_sender_section = False
+                        in_recipient_section = True
+                        story.append(Spacer(1, 0.2*inch))  # Space between sender and recipient
+                        story.append(Paragraph(stripped, styles['body']))
+                        continue
+
+                # Sender contact info lines
+                if '@' in stripped or 'linkedin' in stripped.lower() or 'github' in stripped.lower() or 'portfolio' in stripped.lower():
                     formatted_line = self._format_contact_line(stripped)
                     story.append(Paragraph(formatted_line, styles['header']))
                 else:
                     story.append(Paragraph(stripped, styles['header']))
                 continue
 
-            # Date line
-            if re.match(r'\d{1,2}/\d{1,2}/\d{4}', stripped) or re.match(r'[A-Z][a-z]+ \d{1,2}, \d{4}', stripped):
-                in_header = False
-                story.append(Spacer(1, 0.2*inch))  # Space after header
-                story.append(Paragraph(stripped, styles['body']))
-                story.append(Spacer(1, 0.2*inch))  # Space after date
-                in_recipient = True
-                continue
-
             # Recipient section (before greeting)
-            if in_recipient:
+            if in_recipient_section:
                 if stripped.startswith('Dear'):
-                    in_recipient = False
+                    in_recipient_section = False
                     story.append(Spacer(1, 0.1*inch))
                     story.append(Paragraph(stripped, styles['body']))
                     story.append(Spacer(1, 0.15*inch))
@@ -101,17 +118,17 @@ class CoverLetterPDFGenerator:
                     story.append(Paragraph(stripped, styles['body']))
                 continue
 
-            # Closing section
-            if stripped in ['Sincerely,', 'Best regards,', 'Thank you,', 'Regards,']:
+            # Closing section (template uses "Thank you,")
+            if stripped in ['Thank you,', 'Sincerely,', 'Best regards,', 'Regards,']:
                 # Flush any remaining paragraph
                 if paragraph_buffer:
                     para_text = ' '.join(paragraph_buffer)
                     story.append(Paragraph(para_text, styles['body']))
                     paragraph_buffer = []
 
-                story.append(Spacer(1, 0.15*inch))
+                story.append(Spacer(1, 0.2*inch))
                 story.append(Paragraph(stripped, styles['body']))
-                story.append(Spacer(1, 0.6*inch))  # Space for signature
+                story.append(Spacer(1, 0.5*inch))  # Space for signature
                 continue
 
             # Final signature name
@@ -218,30 +235,31 @@ class CoverLetterPDFGenerator:
 
 def main():
     """Test cover letter PDF generator"""
-    sample_cover_letter = """Naga Venkata Sai Chennu
+    sample_cover_letter = """January 25, 2025
+
+Naga Venkata Sai Chennu
 Arlington, VA 22204
-naga.chennu@example.com | +1 571-546-6207
++1 571-546-6207
+naga.chennu@example.com
 LinkedIn | GitHub | Portfolio
 
-January 25, 2025
-
 Hiring Manager
+Senior Recruiter
 Google Inc.
 1600 Amphitheatre Parkway
 Mountain View, CA 94043
 
 Dear Hiring Manager,
 
-I am writing to express my strong interest in the Senior Software Engineer position at Google. With over 5 years of experience building scalable distributed systems and a proven track record of delivering high-impact projects, I am excited about the opportunity to contribute to Google's mission of organizing the world's information.
+I am excited to apply for the Senior Software Engineer position at Google. With over 5 years of experience building scalable distributed systems and a proven track record of delivering high-impact projects, I am confident I would be an excellent fit for this role.
 
-In my current role at TechCorp, I led the architecture and implementation of a microservices platform that now handles over 10 million requests per day with 99.99% uptime. This experience has given me deep expertise in Python, distributed systems, and cloud infrastructure - skills that directly align with the requirements for this role. I am particularly drawn to Google's emphasis on innovation and technical excellence, and I believe my background in building scalable systems would enable me to make meaningful contributions to your team.
+In my current role at TechCorp, I led the architecture and implementation of a microservices platform that now handles over 10 million requests per day with 99.99% uptime. This experience has given me deep expertise in Python, distributed systems, and cloud infrastructure - skills that directly align with your requirements. I am particularly drawn to Google's emphasis on innovation and technical excellence.
 
-I am impressed by Google's commitment to solving complex technical challenges at scale, and I am eager to bring my experience in system design and cloud architecture to help drive your projects forward. I would welcome the opportunity to discuss how my skills and experience align with your team's needs.
+I have a strong track record of collaborating with cross-functional teams to deliver complex projects on time and under budget. My ability to translate business requirements into technical solutions, combined with my passion for building robust and scalable systems, makes me an ideal candidate for this position. I am eager to bring my experience in system design and cloud architecture to help drive Google's projects forward.
 
-Thank you for considering my application. I look forward to the possibility of contributing to Google's continued success.
+Thank you for considering my application. I am very interested in this opportunity and look forward to discussing how my skills and experience align with your team's needs.
 
-Sincerely,
-
+Thank you,
 Naga Venkata Sai Chennu"""
 
     generator = CoverLetterPDFGenerator()

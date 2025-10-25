@@ -185,32 +185,36 @@ Full Job Analysis:
    - Address how you can solve their specific challenges
    - Show passion for the role/industry
 
-## Output Format:
-
-[Your Name]
-[Your Address]
-[Your Email] | [Your Phone]
-[LinkedIn URL]
+## Output Format (FOLLOW THIS EXACT STRUCTURE):
 
 [Date]
 
-[Hiring Manager Name/Title] (use "Hiring Manager" if unknown)
-[Company Name]
-[Company Address]
-
-Dear [Hiring Manager Name/Hiring Manager],
-
-[Opening paragraph - hook and position statement]
-
-[Body paragraph 1 - compelling story demonstrating relevant skills]
-
-[Body paragraph 2 - connecting your experience to company needs]
-
-[Closing paragraph - call to action and enthusiasm]
-
-Sincerely,
-
 [Your Name]
+[Street Address
+City, State, Zip]
+[Phone Number]
+[Email]
+[LinkedIn profile and/or website address]
+
+[Hiring Manager Name]
+[Title]
+[Company Name]
+[Company Address
+City, State, Zip]
+
+Dear [Hiring Manager Name],
+
+[First Paragraph - Introduction]
+In one to three sentences, explain why you are writing and mention the specific position you are applying for. Highlight the main experience or qualification you have that would make you ideal for this job.
+
+[Middle Paragraph(s) - Your Value Proposition]
+This is where you sell yourself. Focus on recent achievements and use strong verbs to describe your skills. Explain how your skills and qualifications will make you a valuable asset to the company. Use specific examples with quantifiable results.
+
+[Closing Paragraph]
+Thank the reader for their time and attention. Reiterate your interest and enthusiasm about the position. Mention that you look forward to hearing from them shortly.
+
+Thank you,
+[Your Full Name]
 
 ---
 
