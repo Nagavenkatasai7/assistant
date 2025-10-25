@@ -138,7 +138,8 @@ def main():
                                 "Download",
                                 f.read(),
                                 file_name=Path(resume['file_path']).name,
-                                mime="application/pdf"
+                                mime="application/pdf",
+                                key=f"download_prev_{resume['id']}"
                             )
         else:
             st.info("No resumes generated yet")
@@ -328,11 +329,12 @@ def main():
                             f.read(),
                             file_name=Path(pdf_path).name,
                             mime="application/pdf",
-                            use_container_width=True
+                            use_container_width=True,
+                            key="download_generated_resume"
                         )
 
                 # Copy to clipboard
-                if st.button("📋 Copy Markdown", use_container_width=True):
+                if st.button("📋 Copy Markdown", use_container_width=True, key="copy_markdown_btn"):
                     st.code(st.session_state.generated_resume['content'])
 
     with tab2:
