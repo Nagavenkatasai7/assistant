@@ -87,12 +87,27 @@ def main():
     with st.sidebar:
         st.header("⚙️ Settings")
 
-        # Check for Profile.pdf
-        if Path("Profile.pdf").exists():
+        # Check for Profile.pdf or allow upload
+        profile_exists = Path("Profile.pdf").exists()
+
+        if profile_exists:
             st.success("✓ Profile.pdf found")
         else:
-            st.error("✗ Profile.pdf not found")
-            st.info("Please add your Profile.pdf to the project directory")
+            st.warning("⚠️ Profile.pdf not found")
+            st.info("Upload your profile PDF below:")
+
+            uploaded_profile = st.file_uploader(
+                "Upload Profile PDF",
+                type=["pdf"],
+                help="Upload your profile/resume PDF for parsing"
+            )
+
+            if uploaded_profile:
+                # Save temporarily
+                with open("Profile.pdf", "wb") as f:
+                    f.write(uploaded_profile.read())
+                st.success("✓ Profile uploaded successfully!")
+                st.rerun()
 
         # Check API keys
         if os.getenv("ANTHROPIC_API_KEY"):
