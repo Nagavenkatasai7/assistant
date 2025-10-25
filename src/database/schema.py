@@ -57,6 +57,21 @@ class Database:
             )
         """)
 
+        # Generated cover letters table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS generated_cover_letters (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_description_id INTEGER NOT NULL,
+                resume_id INTEGER,
+                cover_letter_content TEXT NOT NULL,
+                file_path TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (job_description_id) REFERENCES job_descriptions(id),
+                FOREIGN KEY (resume_id) REFERENCES generated_resumes(id),
+                UNIQUE(job_description_id)
+            )
+        """)
+
         conn.commit()
         conn.close()
 
@@ -189,3 +204,52 @@ class Database:
             "ats_score": row[4],
             "created_at": row[5]
         } for row in results]
+
+    def check_cover_letter_exists(self, job_description_id):
+        """Check if cover letter already generated for this job"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, file_path, created_at FROM generated_cover_letters
+            WHERE job_description_id = ?
+        """, (job_description_id,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        if result:
+            return {
+                "id": result[0],
+                "file_path": result[1],
+                "created_at": result[2]
+            }
+        return None
+
+    def insert_generated_cover_letter(self, job_description_id, cover_letter_content, file_path, resume_id=None):
+        """Insert generated cover letter"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO generated_cover_letters (job_description_id, resume_id, cover_letter_content, file_path)
+                VALUES (?, ?, ?, ?)
+            """, (job_description_id, resume_id, cover_letter_content, file_path))
+            conn.commit()
+            cover_letter_id = cursor.lastrowid
+        except sqlite3.IntegrityError:
+            # Cover letter already exists, update it
+            cursor.execute("""
+                UPDATE generated_cover_letters
+                SET cover_letter_content = ?, file_path = ?, resume_id = ?
+                WHERE job_description_id = ?
+            """, (cover_letter_content, file_path, resume_id, job_description_id))
+            conn.commit()
+            cursor.execute("""
+                SELECT id FROM generated_cover_letters WHERE job_description_id = ?
+            """, (job_description_id,))
+            cover_letter_id = cursor.fetchone()[0]
+
+        conn.close()
+        return cover_letter_id

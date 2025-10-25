@@ -1,0 +1,628 @@
+Jobscan/ Blog/ Cover Letter/ How to Use ChatGPT to Write Your Cover Letter
+Cover
+Letter
+June 26,
+2025
+How to
+Use
+ChatGPT
+to Write
+Your
+Cover
+Letter
+Used the right way,
+ChatGPT can help you
+write a compelling
+cover letter. This guide
+shows you how to use
+prompts and ﬁne-tune
+your letter.
+Author:
+Robert Henderson,
+CPRW, Resume
+Expert
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 1/20
+If you’re applying for jobs, chances are you’ve dreaded writing a cover letter.
+They can be time-consuming, repetitive, and tough to get right, especially when you’re not sure
+what to say or how to say it without sounding generic.
+But are cover letters really necessary?
+In most cases, yes! According to Jobscan’s State of the Job Search report, applicants who
+included a cover letter were 3.4 times more likely to land an interview. It demonstrates that
+you’re thoughtful, motivated, and serious about the role.
+That’s where ChatGPT comes in. With the right prompt, it can help you write a professional,
+personalized cover letter in less time.
+This guide will show you how to write a cover letter that actually gets attention, without
+sounding like everyone else.
+Generate a tailored cover letter in
+seconds
+Just paste your resume and the job description, and Jobscan will
+instantly generate a tailored cover letter you can edit and send.
+Create a Tailored Cover Letter Now
+Generate your
+cover letter
+ of Contents
+ ChatGPT can (and
+ do
+ o write a ChatGPT
+ letter in 3 simple
+ p 1: Gather your
+ terials
+ p 2: Use these
+ mpts to write a
+ er letter with
+ atGPT
+ p 3: Edit and
+ sonalize the AI
+ put
+ s: prompts to
+ your draft
+ o write prompts
+ eciﬁc situations
+ erate your cover
+letter
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 2/20
+What ChatGPT can (and can’t) do
+ChatGPT is a free AI tool that can help you write a cover letter, but it needs the right input.
+If your prompt is too vague, you’ll get a bland, generic draft that could apply to anyone. That’s
+because ChatGPT doesn’t know your background, your accomplishments, or why you want the
+job, unless you tell it.
+ChatGPT works by responding to prompts. These are instructions that guide what it writes and
+how it writes it. The better your prompt, the better the result.
+Should you use ChatGPT to write a cover letter? Yes, but it has its pros and cons. While ChatGPT
+is a powerful tool, like any tool, it works best when you use it with care.
+How to write a ChatGPT cover letter in 3
+simple steps
+Now that you know what ChatGPT can (and can’t) do, here’s how to actually use it to write a
+great cover letter—fast.
+Step 1: Gather your materials
+To get started, tell ChatGPT that you need a cover letter. You can also provide some basic
+information about the job you’re applying for and what you’d like to emphasize in your cover
+letter.
+You’ll need the following:
+The job description: This is where you’ll ﬁnd the keywords, responsibilities, and
+company values you’ll want to reference in your letter.
+Your resume or LinkedIn proﬁle: ChatGPT needs to understand your background. Use
+your resume or copy your LinkedIn proﬁle so it knows your experience, skills, and
+accomplishments.
+A few key achievements: Think of 2–3 speciﬁc accomplishments that show the kind of
+results you deliver. Bonus points if they include numbers.
+•
+•
+•
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 3/20
+Why you want the job: This is one of the easiest things to overlook. But it’s also one of
+the most important. What interests you about the company? The role? What’s your
+“why”?
+Once you’ve got all of that ready, you’re set for step 2: writing the prompt.
+Step 2: Use these prompts to write a cover letter with
+ChatGPT
+Once you’ve gathered your materials, it’s time to put them to work. The secret to getting a
+strong draft from ChatGPT is using the right prompt.
+Here are three prompt types you can use, depending on where you are in the process:
+1. General cover letter prompt
+If you’re applying to similar jobs and want a reusable draft, this prompt will help you build a
+ﬂexible template you can customize later.
+It doesn’t require a job description, just your background and key strengths.
+Try this prompt:
+This gives you a solid base to work from. Later, you can tweak a few lines to reﬂect a speciﬁc
+role or company, without having to start from scratch every time.
+2. Targeted cover letter prompt
+If you’re applying to a speciﬁc job, this is the prompt you want to use. Unlike the general
+template, this one requires the job description along with your resume or LinkedIn proﬁle.
+ChatGPT will use both to tailor your cover letter so it matches the role you’re targeting.
+•
+General cover letter prompt
+“Write a professional cover letter for a [job title] with [X years of experience]. Highlight 3–4
+transferable skills, a few key accomplishments, and keep the tone clear and conﬁdent.
+Make the letter easy to customize for future applications.”
+Copy
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 4/20
+Try this prompt:
+This helps ChatGPT align your skills, experience, and accomplishments with exactly what the
+employer is looking for, making your application more targeted and eﬀective.
+Here’s an example of what that prompt might look like in ChatGPT:
+3. Conﬁdence and clarity booster prompt
+If your letter feels too ﬂat or unsure, this prompt helps make your writing sharper and more
+impactful.
+Try this prompt:
+Targeted cover letter prompt
+“Using this job description and my resume, write a personalized cover letter that shows
+why I’m a strong ﬁt for the role. Job description: [paste job description]. Resume: [paste
+resume or LinkedIn proﬁle].”
+Copy
+Conﬁdence and clarity booster prompt
+“Rewrite this cover letter to sound more conﬁdent. Use stronger action verbs and
+emphasize measurable results. Keep the tone clear and professional.”
+Copy
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 5/20
+You can also ask ChatGPT to rewrite speciﬁc sections, like the opening paragraph or your list of
+accomplishments.
+Step 3: Edit and personalize the AI output
+Once ChatGPT gives you a draft, don’t just copy and paste it into your application. This step is
+where you make the letter truly yours.
+How to personalize your ChatGPT cover letter
+1 Add your voice
+Read your cover letter out loud. Does it sound like something you would say? If not,
+tweak the tone until it feels natural and genuine.
+2 Replace placeholders
+ChatGPT may leave sections like “[Company Name]” or “[Insert Achievement]” blank.
+Make sure you ﬁll in every missing detail before sending.
+3 Verify the facts
+Sometimes ChatGPT gets creative. Double-check that all experience, skills, dates, and
+results are accurate.
+4 Keep it concise
+A good cover letter doesn’t need to be long. Aim for under 300 words. Short, focused,
+and skimmable works best.
+5 Match the tone to the company
+A letter for a law ﬁrm shouldn’t sound the same as one for a creative agency. Adjust
+your language and tone to reﬂect the industry.
+Not getting what you want from ChatGPT? Or want to compare your draft to a stronger version?Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 6/20
+Jobscan’s cover letter generator uses AI trained speciﬁcally for job applications. Just paste your
+resume and the job description, and it’ll instantly generate a personalized ATS cover letter you
+can reﬁne and use.
+It’s a fast, targeted way to get a strong draft, especially if you’re short on time. Watch this brief
+video to see how Jobscan’s cover letter generator works:
+Bonus: prompts to reﬁne your draft
+Once you’ve reviewed your initial draft, you can use ChatGPT again to help improve or tighten
+it.
+Here are a few quick prompts to try:
+To shorten it: “Shorten this cover letter to under 200 words while keeping the strongest
+points.”
+To add metrics: “Rewrite this cover letter to include more measurable results where
+possible.”
+To vary tone: “Make this cover letter sound more enthusiastic but still professional.”
+AI-Powered Cover Letter Generator | JobscanAI-Powered Cover Letter Generator | Jobscan
+•
+•
+•
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 7/20
+To clarify a paragraph: “Rewrite this paragraph to make it clearer and more direct.”
+You don’t have to start from scratch. Just guide ChatGPT to make focused improvements.
+Don’t rely on ChatGPT too much
+“Use ChatGPT as a tool to assist in the writing process, not as a
+replacement for your input and eﬀort. Your insights,
+experiences, and knowledge are not just important, they are
+crucial to creating a compelling cover letter that truly represents
+you.”
+Clair Levy, Certiﬁed Executive Resume Writer
+How to write prompts for speciﬁc
+situations
+Diﬀerent backgrounds call for diﬀerent strategies. These prompts are tailored to your
+experience level, but to get the best results, you’ll also need to provide the right information
+along with the prompt.
+No experience / entry-level
+If you’re just starting out, focus on what you’ve learned and how you’ve applied it. Academic
+projects, volunteer work, and internships can show real value.
+What to include along with the prompt:
+Job description
+Coursework or major
+Academic or class projects
+Volunteer work or internships
+•
+•
+•
+•
+•
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 8/20
+Any certiﬁcations
+Then try this prompt:
+Mid-level professionals
+Show how your experience has grown and the value you’ve delivered. Focus on achievements
+and career progression.
+What to include along with the prompt:
+Job description
+Resume or LinkedIn proﬁle
+2–3 key accomplishments (with numbers if possible)
+Areas of responsibility from past roles
+Any leadership or collaboration experience
+Try this prompt:
+•
+No experience / entry level prompt
+“Write a cover letter for an entry-level [job title] position. I’ve studied [your major or area
+of study] and completed coursework in [course names]. I worked on [academic project]
+which involved [short description and results]. I also volunteered at [organization], where
+I [impact]. Tailor the letter to this job description: [paste job description]. Keep it under
+300 words and sound enthusiastic but professional.”
+Copy
+•
+•
+•
+•
+•
+Mid-level professionals prompt
+“Write a cover letter for a [job title] with [X] years of experience. My resume includes roles
+in [previous job titles] where I was responsible for [key responsibilities]. Highlight these
+achievements: [achievement 1], [achievement 2], [achievement 3]. Tailor the content to
+Copy
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 9/20
+Senior-level leaders
+You’re aiming to show strategic leadership, big-picture thinking, and major outcomes. Use
+strong, high-level language.
+What to include along with the prompt:
+Job description
+Resume or LinkedIn proﬁle
+Strategic initiatives you’ve led
+Leadership experience (team size, scope)
+2–3 key results (business growth, cost savings, transformations)
+Try this prompt:
+Career changers
+Help ChatGPT understand what you’re leaving, where you’re going, and what transferable value
+you bring.
+What to include along with the prompt:
+match this job description: [paste job description]. Keep it focused, conﬁdent, and under
+300 words.”
+•
+•
+•
+•
+•
+Senior-level leaders prompt
+“Write a cover letter for a senior-level [job title] position. I’ve led initiatives such as
+[initiative] that resulted in [impact]. I managed teams of [number], oversaw budgets of
+[amount], and helped achieve [strategic outcome]. Tailor the tone to match this job
+description: [paste job description]. Keep it conﬁdent, polished, and executive-level.”
+Copy
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 10/20
+Job description
+Resume or LinkedIn proﬁle
+Current industry and target industry/role
+Transferable skills and relevant achievements
+A short reason for your career change
+Try this prompt:
+How to use ChatGPT in your job search
+ChatGPT isn’t just for writing full cover letters. You can also use it to sharpen your strategy,
+improve your content, and save time on repetitive tasks.
+Just make sure to feed it the right info along with your prompt.
+1. Find the right keywords
+Hiring managers (and ATS) scan for speciﬁc words related to skills, qualiﬁcations, and tools. This
+prompt helps you identify those terms so you can naturally weave them into your application.
+What to include: The full job description. ChatGPT will scan it for frequently mentioned skills,
+qualiﬁcations, and tools, so you can mirror that language in your application.
+•
+•
+•
+•
+•
+Career changers prompt
+“Write a cover letter for someone transitioning from [current ﬁeld] to [target role or
+industry]. I’ve developed skills in [list transferable skills] through my work in [previous
+ﬁeld], including [achievement or project]. I’m making this pivot because [brief
+explanation]. Use the following job description to tailor the letter: [paste job description].
+Keep it forward-looking, conﬁdent, and around 250–300 words.”
+Copy
+Find the right keywords prompt CopySkip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 11/20
+Want to take the guesswork out of keyword optimization? Try Jobscan’s Cover Letter Generator.
+It analyzes your resume and the job description to create a tailored cover letter that’s optimized
+for both content and ATS.
+You can even turn on the “Highlight Skills” feature to instantly see which keywords were
+included, so you know your letter is aligned with what employers are looking for.
+2. Research the company
+Personalizing your cover letter shows genuine interest, and including details about the
+company’s mission, values, or recent news can help your letter stand out. This prompt helps
+you ﬁnd those details quickly.
+What to include: The company name. You can also paste a link to their About or News page
+for better results.
+“Based on this job description, what keywords should I include in my resume and cover
+letter?”
+Research the company prompt
+“Summarize the mission, values, and recent news about [Company Name].”
+Copy
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 12/20
+3. Turn your experience into a story (STAR method)
+Using the STAR method—Situation, Task, Action, Result—helps you clearly communicate your
+impact. This prompt turns a plain bullet point into a mini success story.
+Here’s an example:
+S = Situation: What was the context or background?
+Example: “Customer satisfaction scores were dropping at our call center.”
+T = Task: What was your responsibility or goal?
+Example: “I was asked to identify the cause and improve the scores within three months.”
+A = Action: What action did you do to address it?
+Example: “I analyzed support call logs, discovered common pain points, and launched a new
+training program focused on active listening and empathy.”
+R = Result: What happened as a result of your action?
+Example: “Customer satisfaction scores increased by 25%, and call resolution time dropped
+by 15%.”
+Final bullet: “Improved customer satisfaction scores by 25% and reduced call resolution
+time by 15% by identifying service gaps in support call logs and launching a targeted training
+program for staﬀ focused on active listening and empathy.”
+What to include: A resume bullet point or a short description of a past achievement. ChatGPT
+will rework it into the STAR format.
+4. Write a stronger opening line
+Your ﬁrst paragraph sets the tone for the rest of your cover letter. This prompt helps you craft
+an opening that’s attention-grabbing and tailored to the job.
+Turn your experience into a story prompt
+“Rewrite this bullet point using the STAR method: [paste bullet].”
+Copy
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 13/20
+What to include: The job title, company name, job description, and a quick note about what
+excites you about the role or why you’re a great ﬁt.
+Even small improvements can make your application stronger. The more context you give
+ChatGPT, the better its output will be, so always include your materials, not just the prompt.
+ChatGPT cover letter do’s and don’ts
+ChatGPT can save you time, but only if you use it wisely. These tips will help you avoid common
+ChatGPT cover letter mistakes and make sure your cover letter still sounds personal, polished,
+and professional.
+Do’s
+Paste company values into your
+prompt so ChatGPT can reﬂect the
+company’s tone and priorities.
+Use storytelling frameworks like
+STAR to make your experience
+more engaging.
+Ask for multiple versions of a
+paragraph or sentence and choose
+the one that sounds strongest.
+Have it suggest alternative
+phrasing when you’re stuck or
+unsure how to word something.
+Don’ts
+Don’t copy and paste the draft
+without reviewing it. AI-generated
+text still needs editing.
+Don’t forget to personalize the
+letter with your voice and speciﬁc
+reasons for applying.
+Don’t include inaccurate or
+made-up details. Always check for
+factual correctness.
+Don’t reuse the same letter for
+every job. Generic content won’t
+get you noticed.
+Write a stronger opening line prompt
+“Write an attention-grabbing opening paragraph for a cover letter applying to this job:
+[paste job description]. I’m excited about this role because [insert reason].”
+Copy
+•
+•
+•
+•
+•
+•
+•
+•
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 14/20
+Should you use ChatGPT to write a cover
+letter?
+If you use it the right way, ChatGPT can be a powerful time-saver. It can help you write faster,
+get unstuck, and generate ideas you might not have considered on your own.
+But it’s just a tool. The most eﬀective cover letters still reﬂect your voice, your experience, and
+your motivation.
+Worried that employers will know you used AI?
+Don’t be, as long as you personalize it. AI-generated text only stands out when it’s vague,
+robotic, or clearly oﬀ-target. The best writing isn’t about being 100% original. It’s about being
+clear, relevant, and real.
+So use ChatGPT to speed up the process. Let it help you brainstorm, format, and ﬁne-tune. Just
+make sure the ﬁnal version sounds like something you’d actually say.
+That’s the diﬀerence between a forgettable form letter, and one that gets interviews.
+Tips to make your ChatGPT cover letter
+even better
+Once you’ve used ChatGPT to generate a strong draft, the ﬁnal step is making it feel personal,
+polished, and professional.
+The following cover letter tips will help you reﬁne your letter, avoid common mistakes, and add
+the ﬁnishing touches that make a real diﬀerence.
+Tip #1. Know the diﬀerence between a cover letter vs.
+a resume
+It’s important to understand the diﬀerence between a cover letter and a resume. A resume
+highlights your experience; a cover letter adds context, motivation, and personality.
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 15/20
+If you’re unsure how the two complement each other, you can learn more about the diﬀerence
+between cover letters and resumes and when to use each. You can also explore what a cover
+letter can explain that a resume can’t to better understand its value in telling your story.
+Tip #2. Address your cover letter properly
+Your cover letter should feel like it’s written for a real person, not a faceless company. That’s
+why it’s worth spending a few minutes trying to ﬁnd the hiring manager’s name.
+Check the job posting, the company’s website, or even LinkedIn. But if you come up short, don’t
+worry. There are still ways to make your letter feel personal and professional.
+For a full breakdown of what to say—and what to avoid—this guide explains how to address a
+cover letter even if you don’t have a direct contact.
+Tip #3. Start with a strong opening paragraph
+Start by making sure your opening paragraph grabs attention and clearly states why you’re
+excited about the role. A strong introduction can set the tone for the entire letter and give the
+hiring manager a reason to keep reading.
+It should highlight what draws you to the company, what makes you a great ﬁt, and what you’re
+hoping to contribute. Here’s how to start a cover letter that stands out, with examples and
+strategies to get it right.
+Tip #4. End your cover letter properly
+As you wrap up, your closing lines matter too. This is your chance to leave a lasting impression.
+Restate your interest, express conﬁdence, and invite next steps without sounding generic or
+pushy. Learn how to end a cover letter in a way that reinforces your enthusiasm and
+encourages a response.
+And don’t overlook the ﬁnal detail: how you sign a cover letter can subtly reinforce
+professionalism and polish.
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 16/20
+Generate a tailored cover letter in
+seconds
+Just paste your resume and the job description, and Jobscan will
+instantly generate a tailored cover letter you can edit and send.
+Create a Tailored Cover Letter Now
+Click to rate this article
+[Total: 257 Average: 5]
+Share
+Robert Henderson, CPRW, Resume Expert
+Robert Henderson, CPRW, is a career advice writer and a resume expert at Jobscan. He is a
+certiﬁed professional resume writer (CPRW) and a member of the Professional Association of
+Résumé Writers & Career Coaches.
+Robert helps produce Jobscan’s articles on resume writing and optimization, cover letter writing,
+LinkedIn proﬁle optimization, and job search strategies. He is an experienced copywriter, content
+creator, editor, and is the author of four non-ﬁction books.
+More articles by Robert Henderson, CPRW, Resume Expert
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 17/20
+Related Articles
+How to End
+a Cover
+Letter the
+Right Way
+(With
+Examples)
+A strong closing on
+your cover letter
+can…
+May 9, 2025
+How to
+Write a
+Cover Letter
+That Gets
+You a Job
+Interview
+Learn to avoid the
+biggest mistake job
+seekers…
+April 1, 2025
+Can a Cover
+Letter Be
+Two Pages?
+Key highlights In a
+tough job
+application
+process,…
+February 6, 2025
+What Can a
+Cover Letter
+Explain that
+a Resume
+Cannot?
+Key highlights A
+strong cover letter
+is very…
+February 6, 2025
+How To
+Write a
+Cover Letter
+With No
+Experience
+How to
+Write an
+Internship
+Cover
+Letter: Step-
+Crafting a
+Standout
+Cover Page
+for Your
+Resume
+What
+Should a
+Cover Letter
+Look Like:
+Expert Tips
+& ExamplesSkip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 18/20
+Key Highlights
+Starting your job
+search for the…
+February 6, 2025
+by-Step
+Guide
+Key highlights An
+internship cover
+letter is a…
+February 6, 2025
+Key highlights In
+the competitive job
+market, a…
+February 6, 2025
+Key highlights In
+the tough job
+market, a…
+February 5, 2025
+Join 2 million job seekers who get weekly job search
+tips from a Certiﬁed Professional Resume Writer
+Get insider knowledge and ready-to-use job-seeking tips and hacks delivered to
+your inbox.
+Email*
+Subscribe to The Standout
+Platform
+Pricing
+Resume Optimization
+Resume Builder
+Resume Power Edit
+LinkedIn
+Optimization
+Job Tracker
+Career Change Tool
+ATS Resume
+What Is An ATS?
+How to Optimize
+Your Resume for ATS
+How to Write a
+Resume
+Resume Formats
+Resume Templates
+Resume Examples
+Linkedin
+LinkedIn Proﬁle
+Writing Guide
+LinkedIn Headline
+Examples
+LinkedIn Summary
+Examples
+Company
+About
+Support
+Customer Support
+Privacy
+Terms
+Cookie Policy
+Companies Hiring
+List
+Skip to content
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 19/20
+© 2025 Jobscan
+ WCAG 2.1 AA
+Compliance
+ ADA Compliance
+Cover Letter
+Optimization
+Tutorials
+Customer Stories
+Cover Letter
+How to Write a Cover
+Letter
+Cover Letter Formats
+Cover Letter
+Templates
+Cover Letter
+Examples
+Press
+Careers
+Aﬃliates
+Partnerships
+Jobscan Widget
+10/25/25, 10:29 AM How to Use ChatGPT to Write Your Cover Letter
+https://www.jobscan.co/blog/use-chatgpt-to-generate-a-cover-letter/ 20/20

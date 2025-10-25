@@ -14,6 +14,8 @@ from src.analyzers import JobAnalyzer
 from src.utils import PerplexityClient
 from src.generators import ResumeGenerator
 from src.generators.pdf_generator import PDFGenerator
+from src.generators.coverletter_generator import CoverLetterGenerator
+from src.generators.coverletter_pdf_generator import CoverLetterPDFGenerator
 
 # Page configuration
 st.set_page_config(
@@ -63,6 +65,12 @@ if 'job_analysis' not in st.session_state:
     st.session_state.job_analysis = None
 if 'company_research' not in st.session_state:
     st.session_state.company_research = None
+if 'generated_cover_letter' not in st.session_state:
+    st.session_state.generated_cover_letter = None
+if 'profile_text' not in st.session_state:
+    st.session_state.profile_text = None
+if 'current_job_id' not in st.session_state:
+    st.session_state.current_job_id = None
 
 def initialize_components():
     """Initialize all components"""
@@ -72,8 +80,10 @@ def initialize_components():
     perplexity_client = PerplexityClient()
     resume_generator = ResumeGenerator()
     pdf_generator = PDFGenerator()
+    coverletter_generator = CoverLetterGenerator()
+    coverletter_pdf_generator = CoverLetterPDFGenerator()
 
-    return db, profile_parser, job_analyzer, perplexity_client, resume_generator, pdf_generator
+    return db, profile_parser, job_analyzer, perplexity_client, resume_generator, pdf_generator, coverletter_generator, coverletter_pdf_generator
 
 def main():
     # Header
@@ -81,7 +91,7 @@ def main():
     st.markdown('<div class="sub-header">Generate ATS-optimized resumes with 90+ scores using AI</div>', unsafe_allow_html=True)
 
     # Initialize components
-    db, profile_parser, job_analyzer, perplexity_client, resume_generator, pdf_generator = initialize_components()
+    db, profile_parser, job_analyzer, perplexity_client, resume_generator, pdf_generator, coverletter_generator, coverletter_pdf_generator = initialize_components()
 
     # Sidebar
     with st.sidebar:
@@ -207,6 +217,7 @@ def main():
                         progress_bar = st.progress(0)
                         st.info("📄 Parsing your profile...")
                         profile_text = profile_parser.get_profile_summary()
+                        st.session_state.profile_text = profile_text  # Save for cover letter
                         progress_bar.progress(20)
 
                         # Step 2: Analyze job description
@@ -238,6 +249,7 @@ def main():
                             job_url,
                             json.dumps(job_analysis.get('keywords', []))
                         )
+                        st.session_state.current_job_id = job_id  # Save for cover letter
 
                         existing_resume = db.check_resume_exists(job_id)
                         if existing_resume:
@@ -337,6 +349,105 @@ def main():
                 if st.button("📋 Copy Markdown", use_container_width=True, key="copy_markdown_btn"):
                     st.code(st.session_state.generated_resume['content'])
 
+            st.divider()
+
+            # Cover Letter Section
+            st.subheader("✉️ Cover Letter (Optional)")
+
+            col1, col2 = st.columns([2, 1])
+
+            with col1:
+                st.write("Generate a professional cover letter to complement your resume")
+
+            with col2:
+                if st.button("📝 Generate Cover Letter", type="secondary", use_container_width=True, key="generate_cover_letter_btn"):
+                    if not st.session_state.profile_text or not st.session_state.job_analysis:
+                        st.error("Missing required data. Please generate a resume first.")
+                    else:
+                        with st.spinner("Generating your professional cover letter..."):
+                            try:
+                                progress_bar = st.progress(0)
+
+                                # Step 1: Generate cover letter
+                                st.info("✨ Writing cover letter with Claude...")
+                                coverletter_result = coverletter_generator.generate_cover_letter(
+                                    st.session_state.profile_text,
+                                    st.session_state.job_analysis,
+                                    st.session_state.company_research,
+                                    st.session_state.generated_resume['content']
+                                )
+
+                                if not coverletter_result['success']:
+                                    st.error(f"Cover letter generation failed: {coverletter_result.get('error', 'Unknown error')}")
+                                else:
+                                    progress_bar.progress(50)
+
+                                    # Step 2: Generate PDF
+                                    st.info("📄 Creating cover letter PDF...")
+                                    company_name = st.session_state.job_analysis.get('company_name', 'Company')
+                                    job_title = st.session_state.job_analysis.get('job_title', 'Position')
+
+                                    coverletter_pdf_path = coverletter_pdf_generator.generate_pdf(
+                                        coverletter_result['content'],
+                                        company_name,
+                                        job_title
+                                    )
+                                    progress_bar.progress(75)
+
+                                    # Step 3: Save to database
+                                    if coverletter_pdf_path and st.session_state.current_job_id:
+                                        resume_id = db.check_resume_exists(st.session_state.current_job_id)
+                                        resume_id = resume_id['id'] if resume_id else None
+
+                                        db.insert_generated_cover_letter(
+                                            st.session_state.current_job_id,
+                                            coverletter_result['content'],
+                                            coverletter_pdf_path,
+                                            resume_id
+                                        )
+                                    progress_bar.progress(100)
+
+                                    # Success!
+                                    st.success("✅ Cover Letter Generated Successfully!")
+
+                                    # Store in session
+                                    st.session_state.generated_cover_letter = {
+                                        'content': coverletter_result['content'],
+                                        'pdf_path': coverletter_pdf_path,
+                                        'company_name': company_name
+                                    }
+
+                                    st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error generating cover letter: {e}")
+                                import traceback
+                                st.code(traceback.format_exc())
+
+            # Display generated cover letter
+            if st.session_state.generated_cover_letter:
+                st.markdown("---")
+
+                col1, col2 = st.columns([3, 1])
+
+                with col1:
+                    with st.expander("✉️ Cover Letter Content", expanded=True):
+                        st.markdown(st.session_state.generated_cover_letter['content'])
+
+                with col2:
+                    # Download button
+                    coverletter_pdf_path = st.session_state.generated_cover_letter['pdf_path']
+                    if coverletter_pdf_path and Path(coverletter_pdf_path).exists():
+                        with open(coverletter_pdf_path, 'rb') as f:
+                            st.download_button(
+                                "⬇️ Download Cover Letter PDF",
+                                f.read(),
+                                file_name=Path(coverletter_pdf_path).name,
+                                mime="application/pdf",
+                                use_container_width=True,
+                                key="download_cover_letter_pdf"
+                            )
+
     with tab2:
         st.header("📊 Job Analysis")
 
@@ -404,16 +515,17 @@ def main():
         st.markdown("""
         ### 🎯 What is this?
 
-        The **Ultra ATS Resume Generator** is an AI-powered tool that creates highly optimized resumes designed to score 90+ in Applicant Tracking Systems (ATS).
+        The **Ultra ATS Resume Generator** is an AI-powered tool that creates highly optimized resumes and cover letters designed to score 90+ in Applicant Tracking Systems (ATS).
 
         ### ✨ Key Features
 
         - **ATS Optimization**: Trained on comprehensive ATS knowledge from industry sources
-        - **AI-Powered**: Uses Claude (Anthropic) for intelligent resume generation
+        - **AI-Powered**: Uses Claude (Anthropic) for intelligent resume and cover letter generation
+        - **Cover Letter Generation**: Optional professional cover letters that complement your resume
         - **Company Research**: Optional Perplexity integration for company-specific insights
         - **Duplicate Detection**: Prevents regenerating resumes for the same job
-        - **Database Storage**: Keeps history of all generated resumes
-        - **PDF Export**: Creates ATS-friendly PDF format
+        - **Database Storage**: Keeps history of all generated resumes and cover letters
+        - **PDF Export**: Creates ATS-friendly PDF format with clickable links
 
         ### 🔧 How it Works
 
@@ -422,6 +534,7 @@ def main():
         3. **Research Company**: (Optional) Gathers company insights via Perplexity
         4. **Generate Resume**: Creates tailored, ATS-optimized resume with Claude
         5. **Export PDF**: Generates clean, ATS-friendly PDF format
+        6. **Generate Cover Letter**: (Optional) Creates professional cover letter complementing your resume
 
         ### 📋 ATS Optimization Includes
 
