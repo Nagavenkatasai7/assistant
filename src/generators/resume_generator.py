@@ -53,11 +53,11 @@ class ResumeGenerator:
 
             response_text = message.content[0].text
 
-            # Parse the response
-            # Expected format: Resume content followed by ATS optimization notes
+            # Clean up the response - remove any optimization notes or commentary
+            cleaned_text = self._clean_resume_output(response_text)
 
             return {
-                "content": response_text,
+                "content": cleaned_text,
                 "success": True
             }
 
@@ -68,6 +68,39 @@ class ResumeGenerator:
                 "success": False,
                 "error": str(e)
             }
+
+    def _clean_resume_output(self, text):
+        """Remove any optimization notes or commentary from the resume"""
+        import re
+
+        # Common patterns to remove
+        patterns_to_remove = [
+            r'\n\s*#+\s*Resume Optimization Notes.*$',
+            r'\n\s*#+\s*ATS Optimization.*$',
+            r'\n\s*#+\s*Notes.*$',
+            r'\n\s*#+\s*Tips.*$',
+            r'\n\s*---+\s*\n\s*\*\*.*Optimization.*$',
+            r'\n\s*\*\*Note:.*$',
+            r'\n\s*\*\*Tip:.*$',
+        ]
+
+        cleaned = text
+        for pattern in patterns_to_remove:
+            cleaned = re.sub(pattern, '', cleaned, flags=re.MULTILINE | re.DOTALL)
+
+        # Remove everything after common divider patterns if they appear before notes
+        divider_patterns = [
+            r'\n\s*---+\s*\n\s*#+\s*(Resume|ATS|Optimization)',
+            r'\n\s*---+\s*\n\s*\*\*(Resume|ATS|Optimization)',
+        ]
+
+        for pattern in divider_patterns:
+            match = re.search(pattern, cleaned, re.MULTILINE | re.IGNORECASE)
+            if match:
+                cleaned = cleaned[:match.start()].rstrip()
+                break
+
+        return cleaned.strip()
 
     def _build_resume_prompt(self, profile_text, job_analysis, company_research=None):
         """Build comprehensive prompt for Claude"""
@@ -189,7 +222,14 @@ Provide the resume in clean, well-structured markdown format that follows this s
 - Keep to 1-2 pages maximum
 - Be truthful - enhance and optimize the candidate's real experience, don't fabricate
 
-Generate the ATS-optimized resume now:"""
+**OUTPUT REQUIREMENTS**:
+- Generate ONLY the resume content in the format specified above
+- Do NOT include any optimization notes, tips, or commentary
+- Do NOT add any explanatory text before or after the resume
+- Do NOT include sections like "Resume Optimization Notes" or "ATS Tips"
+- Output should be pure resume content only, starting with the candidate name
+
+Generate the ATS-optimized resume now (resume content only, no additional notes):"""
 
         return prompt
 
