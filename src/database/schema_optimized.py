@@ -485,26 +485,32 @@ class OptimizedDatabase:
         Returns:
             List of resume dictionaries with job info
         """
-        with self.pool.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT
-                    r.id,
-                    r.resume_content,
-                    r.ats_score,
-                    r.file_path,
-                    r.created_at,
-                    j.id as job_id,
-                    j.company_name,
-                    j.job_title,
-                    j.job_description
-                FROM generated_resumes r
-                INNER JOIN job_descriptions j ON r.job_description_id = j.id
-                ORDER BY r.created_at DESC
-                LIMIT ?
-            """, (limit,))
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT
+                        r.id,
+                        r.resume_content,
+                        r.ats_score,
+                        r.file_path,
+                        r.created_at,
+                        j.id as job_id,
+                        j.company_name,
+                        j.job_title,
+                        j.job_description
+                    FROM generated_resumes r
+                    INNER JOIN job_descriptions j ON r.job_description_id = j.id
+                    ORDER BY r.created_at DESC
+                    LIMIT ?
+                """, (limit,))
 
-            return [dict(row) for row in cursor.fetchall()]
+                return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            # Handle pysqlite3 compatibility issues on Streamlit Cloud
+            # Return empty list if tables don't exist or query fails
+            print(f"Warning: Failed to get resumes: {e}")
+            return []
 
     @monitor_query_performance()
     def get_resumes_paginated(
