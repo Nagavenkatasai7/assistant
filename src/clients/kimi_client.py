@@ -46,7 +46,7 @@ class KimiK2Client:
         messages: list[Dict[str, str]],
         temperature: float = None,
         max_tokens: int = None,
-        timeout: float = 120.0
+        timeout: float = 300.0
     ) -> Dict[str, Any]:
         """
         Create a chat completion using Kimi K2
@@ -107,7 +107,7 @@ class KimiK2Client:
         user_prompt: str,
         temperature: float = 0.6,
         max_tokens: int = 4096,
-        timeout: float = 120.0
+        timeout: float = 300.0
     ) -> Dict[str, Any]:
         """
         Generate resume content using Kimi K2

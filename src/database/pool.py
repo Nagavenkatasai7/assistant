@@ -96,29 +96,48 @@ class DatabasePool:
         # Set row factory for dictionary-like access
         conn.row_factory = sqlite3.Row
 
-        # Enable foreign keys
-        conn.execute("PRAGMA foreign_keys = ON")
+        # Enable foreign keys (wrap in try-except for Streamlit Cloud compatibility)
+        try:
+            conn.execute("PRAGMA foreign_keys = ON")
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
+            pass  # Foreign keys not supported or restricted
 
         # Optimize SQLite for better performance
         # Try WAL mode, but fall back gracefully if not supported (e.g., on Streamlit Cloud)
         try:
             conn.execute("PRAGMA journal_mode = WAL")  # Write-Ahead Logging
             self.wal_mode_enabled = True  # WAL mode successfully enabled
-        except sqlite3.DatabaseError:
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
             # WAL mode not supported in this environment (e.g., Streamlit Cloud)
             # Fall back to default DELETE mode - no action needed
             self.wal_mode_enabled = False
             pass
 
-        conn.execute("PRAGMA synchronous = NORMAL")  # Balance durability/performance
-        conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout for locks
-        conn.execute("PRAGMA cache_size = -64000")  # 64MB cache
-        conn.execute("PRAGMA temp_store = MEMORY")  # Store temp tables in memory
+        # Wrap all performance PRAGMA statements for Streamlit Cloud compatibility
+        try:
+            conn.execute("PRAGMA synchronous = NORMAL")  # Balance durability/performance
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
+            pass  # Not supported in restricted environment
+
+        try:
+            conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout for locks
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
+            pass  # Not supported in restricted environment
+
+        try:
+            conn.execute("PRAGMA cache_size = -64000")  # 64MB cache
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
+            pass  # Not supported in restricted environment
+
+        try:
+            conn.execute("PRAGMA temp_store = MEMORY")  # Store temp tables in memory
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
+            pass  # Not supported in restricted environment
 
         # Try memory-mapped I/O, but fall back if not supported
         try:
             conn.execute("PRAGMA mmap_size = 268435456")  # 256MB memory-mapped I/O
-        except sqlite3.DatabaseError:
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
             # Memory-mapped I/O not supported - continue without it
             pass
 

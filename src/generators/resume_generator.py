@@ -356,18 +356,21 @@ Full Job Analysis:
    - Use simple bullet points (-)
    - Standard fonts only in final PDF (Arial, Calibri, or similar)
 
-3. **Keyword Optimization**:
+3. **Keyword Optimization** (Target 2-4% density for core technical skills):
    - Naturally integrate ALL keywords from the job description
+   - **Repeat core technical skills 3-6 times throughout resume** (Professional Summary, Skills, Experience bullets)
    - Include exact phrases from the job posting where relevant
    - Place critical keywords in: Professional Summary, Skills section, and Experience descriptions
    - Mirror the job description language and terminology
    - Include both acronyms and full terms (e.g., "AI/ML" and "Artificial Intelligence/Machine Learning")
+   - **Avoid company-specific business jargon** unless directly relevant to technical role (skip keywords like "apparel design" for engineering roles)
 
 4. **Content Strategy**:
    - Lead with a strong Professional Summary (3-4 lines) that mirrors the job requirements
    - Quantify achievements with specific metrics (%, $, numbers)
    - Use strong action verbs relevant to the role
    - Tailor experience descriptions to emphasize relevant projects and responsibilities
+   - **Soft Skills Integration**: Naturally weave in soft skills from job description (e.g., "creative problem-solving", "self-directed", "collaborative", "adaptable") within experience bullets showing HOW you achieved results
    - Ensure Skills section is comprehensive and matches required/preferred skills
    - **Job Title Prominence**: Include the exact job title "{job_title}" prominently in the Professional Summary or Skills section to match ATS searches
 
@@ -379,13 +382,14 @@ Full Job Analysis:
    - **Scannable Format**: Short bullet points (1-2 lines max), clear headers, strategic white space
    - **Compelling Story**: Don't just list responsibilities - show progression, impact, and growth
 
-6. **ATS Scoring Optimization**:
-   - Target 90%+ keyword match with job description
+6. **ATS Scoring Optimization** (Target 65-75% match rate - avoid over-optimization):
+   - Target 65-75% keyword match with job description (higher scores often flagged as keyword stuffing)
    - Ensure all required skills are explicitly mentioned
    - Include industry-specific terminology
    - Add relevant certifications and education
    - Use consistent date formatting (MM/YYYY)
    - Include location information
+   - **Balance**: Natural readability for humans > perfect ATS score
 
 ## Output Format:
 Provide the resume in clean, well-structured markdown format that follows this structure:
