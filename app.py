@@ -179,7 +179,12 @@ def initialize_database():
         try:
             pool = DatabasePool(db_path, pool_size=10)
         except (sqlite3.DatabaseError, sqlite3.OperationalError) as db_error:
-            if "malformed" in str(db_error).lower() or "corrupted" in str(db_error).lower():
+            error_str = str(db_error).lower()
+            is_corrupted = any(msg in error_str for msg in [
+                "malformed", "corrupted", "file is not a database",
+                "is encrypted", "disk image is"
+            ])
+            if is_corrupted:
                 # Silently recover from database corruption
                 print(f"Detected corrupted database. Recreating...")
                 # Delete corrupted database files
