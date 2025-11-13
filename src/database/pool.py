@@ -97,12 +97,25 @@ class DatabasePool:
         conn.execute("PRAGMA foreign_keys = ON")
 
         # Optimize SQLite for better performance
-        conn.execute("PRAGMA journal_mode = WAL")  # Write-Ahead Logging
+        # Try WAL mode, but fall back gracefully if not supported (e.g., on Streamlit Cloud)
+        try:
+            conn.execute("PRAGMA journal_mode = WAL")  # Write-Ahead Logging
+        except sqlite3.DatabaseError:
+            # WAL mode not supported in this environment (e.g., Streamlit Cloud)
+            # Fall back to default DELETE mode - no action needed
+            pass
+
         conn.execute("PRAGMA synchronous = NORMAL")  # Balance durability/performance
         conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout for locks
         conn.execute("PRAGMA cache_size = -64000")  # 64MB cache
         conn.execute("PRAGMA temp_store = MEMORY")  # Store temp tables in memory
-        conn.execute("PRAGMA mmap_size = 268435456")  # 256MB memory-mapped I/O
+
+        # Try memory-mapped I/O, but fall back if not supported
+        try:
+            conn.execute("PRAGMA mmap_size = 268435456")  # 256MB memory-mapped I/O
+        except sqlite3.DatabaseError:
+            # Memory-mapped I/O not supported - continue without it
+            pass
 
         # FIX: Track connection metadata in separate dictionary
         self.connection_metadata[id(conn)] = {
