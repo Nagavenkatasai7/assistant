@@ -152,10 +152,15 @@ if 'resume_id' not in st.session_state:
 @st.cache_resource
 def initialize_database():
     """Initialize database with migrations and optimizations"""
+    import os
+    import sqlite3
+
+    db_path = 'resume_generator.db'
+
     try:
         # Run migrations with validation (non-blocking - optional performance optimizations)
         try:
-            migrator = MigrationManager('resume_generator.db', 'migrations')
+            migrator = MigrationManager(db_path, 'migrations')
             pending = migrator.get_pending_migrations()
 
             if pending:
@@ -170,8 +175,27 @@ def initialize_database():
             # Migrations are optional performance optimizations - don't block app startup
             st.warning(f"⚠️ Could not apply database migrations: {migration_error}. App will continue with base functionality.")
 
-        # Initialize connection pool
-        pool = DatabasePool('resume_generator.db', pool_size=10)
+        # Initialize connection pool with corruption recovery
+        try:
+            pool = DatabasePool(db_path, pool_size=10)
+        except (sqlite3.DatabaseError, sqlite3.OperationalError) as db_error:
+            if "malformed" in str(db_error).lower() or "corrupted" in str(db_error).lower():
+                st.warning(f"⚠️ Database file is corrupted. Recreating database...")
+                # Delete corrupted database files
+                for ext in ['', '-shm', '-wal', '-journal']:
+                    try:
+                        file_path = db_path + ext
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                            print(f"Removed corrupted file: {file_path}")
+                    except Exception as e:
+                        print(f"Warning: Could not remove {file_path}: {e}")
+
+                # Try again with fresh database
+                pool = DatabasePool(db_path, pool_size=10)
+                st.success("✅ Database recreated successfully")
+            else:
+                raise
 
         # Initialize cache
         cache = get_global_cache()
