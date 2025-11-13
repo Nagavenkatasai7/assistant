@@ -25,7 +25,9 @@ class SecretsManager:
     ]
 
     # Optional secrets
-    OPTIONAL_SECRETS = []
+    OPTIONAL_SECRETS = [
+        'ANTHROPIC_API_KEY',
+    ]
 
     def __init__(self, env_file: Optional[str] = None):
         """
@@ -134,6 +136,18 @@ class SecretsManager:
         """
         return self.get_secret('TAVILY_API_KEY', required=True)
 
+    def get_anthropic_api_key(self) -> str:
+        """
+        Get Anthropic API key (for Claude models)
+
+        Returns:
+            API key
+
+        Raises:
+            ValueError: If API key not found
+        """
+        return self.get_secret('ANTHROPIC_API_KEY', required=False)
+
     @staticmethod
     def mask_secret(secret: str, show_chars: int = 4) -> str:
         """
@@ -203,6 +217,30 @@ class SecretsManager:
 
         return True
 
+    @staticmethod
+    def is_valid_anthropic_key(key: str) -> bool:
+        """
+        Validate Anthropic API key format
+
+        Args:
+            key: API key to validate
+
+        Returns:
+            True if valid format, False otherwise
+        """
+        if not key:
+            return False
+
+        # Anthropic keys start with 'sk-ant-'
+        if not key.startswith('sk-ant-'):
+            return False
+
+        # Should be reasonable length
+        if len(key) < 20:
+            return False
+
+        return True
+
     def verify_secrets_format(self) -> Dict[str, bool]:
         """
         Verify format of all configured secrets
@@ -225,6 +263,13 @@ class SecretsManager:
             results['TAVILY_API_KEY'] = self.is_valid_tavily_key(tavily_key)
         else:
             results['TAVILY_API_KEY'] = False
+
+        # Check Anthropic key
+        anthropic_key = self.get_secret('ANTHROPIC_API_KEY', required=False)
+        if anthropic_key:
+            results['ANTHROPIC_API_KEY'] = self.is_valid_anthropic_key(anthropic_key)
+        else:
+            results['ANTHROPIC_API_KEY'] = False
 
         return results
 

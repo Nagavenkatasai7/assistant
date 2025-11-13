@@ -248,12 +248,12 @@ def initialize_database():
         st.stop()
         return None, None, None
 
-def initialize_components(db):
-    """Initialize all components"""
+def initialize_components(db, model="kimi-k2"):
+    """Initialize all components with model selection"""
     profile_parser = ProfileParser()
     job_analyzer = JobAnalyzer()
     tavily_client = TavilyClient()
-    resume_generator = ResumeGenerator()
+    resume_generator = ResumeGenerator(model=model)
     pdf_generator = PDFGenerator()
     enhanced_pdf_generator = EnhancedPDFGenerator()  # New enhanced generator
     coverletter_generator = CoverLetterGenerator()
@@ -287,8 +287,9 @@ def main():
     # Initialize optimized database
     db, pool, cache, disk_validator = initialize_database()
 
-    # Initialize components
-    profile_parser, job_analyzer, tavily_client, resume_generator, pdf_generator, enhanced_pdf_generator, coverletter_generator, coverletter_pdf_generator, docx_generator = initialize_components(db)
+    # Model selection - store in session state for persistence
+    if 'selected_model' not in st.session_state:
+        st.session_state.selected_model = "claude-opus-4"  # Default to Claude Opus 4.1 (Fast)
 
     # Sidebar
     with st.sidebar:
@@ -341,6 +342,11 @@ def main():
             st.success("✓ Kimi K2 API key configured")
         else:
             st.error("✗ Kimi K2 API key missing")
+
+        if os.getenv("ANTHROPIC_API_KEY"):
+            st.success("✓ Claude Opus 4.1 API key configured")
+        else:
+            st.warning("⚠️ Claude Opus 4.1 API key not configured (optional)")
 
         if os.getenv("TAVILY_API_KEY"):
             st.success("✓ Tavily API key configured")
@@ -474,6 +480,41 @@ def main():
 
         st.divider()
 
+        # Model Selection
+        st.subheader("🤖 AI Model Selection")
+
+        col_model1, col_model2 = st.columns(2)
+
+        with col_model1:
+            st.markdown("**Claude Opus 4.1 (Fast)**")
+            st.caption("Anthropic's fast reasoning model")
+            st.info("Speed: Very Fast | Quality: Excellent")
+            st.caption("Best for: Quick iterations")
+
+        with col_model2:
+            st.markdown("**Kimi K2 (High Quality)**")
+            st.caption("Moonshot AI's deep reasoning model")
+            st.info("Speed: Moderate | Quality: Superior")
+            st.caption("Best for: Important applications")
+
+        # Model selection radio buttons
+        selected_model = st.radio(
+            "Choose AI Model:",
+            options=['claude-opus-4', 'kimi-k2'],
+            format_func=lambda x: {
+                'claude-opus-4': '⚡ Claude Opus 4.1 (Fast)',
+                'kimi-k2': '🎯 Kimi K2 (High Quality - Default)'
+            }[x],
+            index=0,  # Default to Claude Opus 4.1
+            horizontal=True,
+            help="Select the AI model for resume generation. Claude is faster, Kimi provides deeper analysis."
+        )
+
+        # Store selected model in session state
+        st.session_state.selected_model = selected_model
+
+        st.divider()
+
         # Options row
         col1, col2, col3 = st.columns([2, 2, 1])
 
@@ -531,6 +572,9 @@ def main():
                 # Show remaining quota in sidebar
                 remaining_quota = limiter.get_remaining_quota(user_id, 'hourly')
                 st.sidebar.success(f"✅ Remaining quota: {remaining_quota}/10 this hour")
+                # Initialize components with selected model
+                profile_parser, job_analyzer, tavily_client, resume_generator, pdf_generator, enhanced_pdf_generator, coverletter_generator, coverletter_pdf_generator, docx_generator = initialize_components(db, model=selected_model)
+
                 # Show progress
                 with st.spinner("Generating your ATS-optimized resume..."):
                     try:
@@ -635,7 +679,8 @@ def main():
                         progress_bar.progress(100)
 
                         # Success!
-                        st.success("✅ ATS-Optimized Resume Generated Successfully!")
+                        model_display = "Claude Opus 4.1" if selected_model == "claude-opus-4" else "Kimi K2"
+                        st.success(f"✅ ATS-Optimized Resume Generated Successfully using {model_display}!")
                         st.balloons()
 
                         # Get the resume ID from database
@@ -1173,7 +1218,7 @@ def main():
         ### ✨ Key Features
 
         - **ATS Optimization**: Trained on comprehensive ATS knowledge from industry sources
-        - **AI-Powered**: Uses Kimi K2 (Moonshot AI) for intelligent resume and cover letter generation
+        - **Dual AI Models**: Choose between Claude Opus 4.1 (fast) or Kimi K2 (high quality) for resume generation
         - **Cover Letter Generation**: Optional professional cover letters that complement your resume
         - **Company Research**: Optional Tavily AI integration for company-specific insights
         - **Duplicate Detection**: Prevents regenerating resumes for the same job
@@ -1183,9 +1228,9 @@ def main():
         ### 🔧 How it Works
 
         1. **Parse Profile**: Extracts your information from Profile.pdf
-        2. **Analyze Job**: Uses Kimi K2 to extract keywords, skills, and requirements
+        2. **Analyze Job**: Uses AI to extract keywords, skills, and requirements
         3. **Research Company**: (Optional) Gathers company insights via Tavily AI
-        4. **Generate Resume**: Creates tailored, ATS-optimized resume with Kimi K2
+        4. **Generate Resume**: Creates tailored, ATS-optimized resume with your chosen AI model (Claude Opus 4.1 or Kimi K2)
         5. **Export PDF**: Generates clean, ATS-friendly PDF format
         6. **Generate Cover Letter**: (Optional) Creates professional cover letter complementing your resume
 
@@ -1201,7 +1246,8 @@ def main():
 
         ### 🔑 API Keys Required
 
-        - **Kimi K2 API** (Required): For resume generation and analysis
+        - **Kimi K2 API** (Required): For high-quality resume generation and analysis
+        - **Claude Opus 4.1 API** (Optional): For fast resume generation
         - **Tavily API** (Required): For company research
 
         ### 📚 Knowledge Base

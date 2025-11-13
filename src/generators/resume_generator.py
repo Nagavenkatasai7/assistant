@@ -21,8 +21,9 @@ from src.security.secrets_manager import SecretsManager
 from src.security.security_logger import get_security_logger, SecurityEventType
 from config import APIConfig, SecurityConfig
 
-# Import Kimi client
+# Import AI clients
 from src.clients.kimi_client import KimiK2Client
+from src.clients.claude_client import ClaudeOpusClient
 
 # Import ATS scoring
 try:
@@ -33,20 +34,46 @@ except ImportError:
 load_dotenv()
 
 class ResumeGenerator:
-    def __init__(self, ats_knowledge_path="ats_knowledge_base.md"):
+    def __init__(self, ats_knowledge_path="ats_knowledge_base.md", model="kimi-k2"):
+        """
+        Initialize ResumeGenerator with model selection
+
+        Args:
+            ats_knowledge_path: Path to ATS knowledge base file
+            model: Model to use - "kimi-k2" (default) or "claude-opus-4"
+        """
         # Initialize security components
         self.secrets_manager = SecretsManager()
         self.security_logger = get_security_logger()
         self.prompt_sanitizer = PromptSanitizer()
 
-        # Get API key securely
+        # Store model selection
+        self.model = model
+
+        # Initialize appropriate client based on model selection
         try:
-            api_key = self.secrets_manager.get_kimi_api_key()
-            self.client = KimiK2Client(api_key=api_key)
+            if model == "claude-opus-4":
+                # Use Claude Opus 4.1
+                api_key = self.secrets_manager.get_anthropic_api_key()
+                if not api_key:
+                    # Fallback to Kimi if Claude key not available
+                    print("Warning: Anthropic API key not found, falling back to Kimi K2")
+                    self.model = "kimi-k2"
+                    api_key = self.secrets_manager.get_kimi_api_key()
+                    self.client = KimiK2Client(api_key=api_key)
+                    self.api_name = "kimi_k2"
+                else:
+                    self.client = ClaudeOpusClient(api_key=api_key)
+                    self.api_name = "claude_opus_4"
+            else:
+                # Use Kimi K2 (default)
+                api_key = self.secrets_manager.get_kimi_api_key()
+                self.client = KimiK2Client(api_key=api_key)
+                self.api_name = "kimi_k2"
         except ValueError as e:
             self.security_logger.log_event(
                 SecurityEventType.SECRET_MISSING,
-                "Kimi API key not found",
+                f"API key not found for model {model}",
                 severity="CRITICAL"
             )
             raise
@@ -120,17 +147,28 @@ class ResumeGenerator:
                     print(f"Retry attempt {attempt + 1}/{max_retries} after {retry_delay:.1f}s delay...")
                     time.sleep(retry_delay)
                 else:
-                    print("Generating ATS-optimized resume with Kimi K2...")
+                    model_name = "Claude Opus 4.1" if self.model == "claude-opus-4" else "Kimi K2"
+                    print(f"Generating ATS-optimized resume with {model_name}...")
 
-                # Use configuration for API settings with Kimi K2
-                result = self.client.chat_completion(
-                    messages=[
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=APIConfig.KIMI_TEMPERATURE,
-                    max_tokens=APIConfig.KIMI_MAX_TOKENS,
-                    timeout=SecurityConfig.API_TIMEOUT_SECONDS
-                )
+                # Use configuration for API settings based on selected model
+                if self.model == "claude-opus-4":
+                    result = self.client.chat_completion(
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=APIConfig.CLAUDE_TEMPERATURE,
+                        max_tokens=APIConfig.CLAUDE_MAX_TOKENS,
+                        timeout=SecurityConfig.API_TIMEOUT_SECONDS
+                    )
+                else:
+                    result = self.client.chat_completion(
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=APIConfig.KIMI_TEMPERATURE,
+                        max_tokens=APIConfig.KIMI_MAX_TOKENS,
+                        timeout=SecurityConfig.API_TIMEOUT_SECONDS
+                    )
 
                 # Check if API call was successful
                 if not result['success']:
@@ -143,12 +181,16 @@ class ResumeGenerator:
                 duration_ms = int(result['duration'] * 1000)
                 tokens_used = result['usage']['total_tokens']
 
-                # Estimate cost (Kimi pricing: ~$0.002/1K tokens for input+output)
-                cost_estimate = (tokens_used / 1000) * 0.002
+                # Estimate cost based on model
+                # Kimi pricing: ~$0.002/1K tokens, Claude Opus 4: ~$0.015/1K input + $0.075/1K output (average ~$0.045/1K)
+                if self.model == "claude-opus-4":
+                    cost_estimate = (tokens_used / 1000) * 0.045
+                else:
+                    cost_estimate = (tokens_used / 1000) * 0.002
 
                 # Log successful API call
                 self.security_logger.log_api_call(
-                    api_name="kimi_k2",
+                    api_name=self.api_name,
                     success=True,
                     user_identifier=user_identifier,
                     tokens_used=tokens_used,
@@ -196,7 +238,7 @@ class ResumeGenerator:
                     print(f"Error generating resume: {error_msg}")
 
                     self.security_logger.log_api_call(
-                        api_name="kimi_k2",
+                        api_name=self.api_name,
                         success=False,
                         user_identifier=user_identifier,
                         error=error_msg
@@ -214,7 +256,7 @@ class ResumeGenerator:
                 print(f"Error generating resume: {error_msg}")
 
                 self.security_logger.log_api_call(
-                    api_name="kimi_k2",
+                    api_name=self.api_name,
                     success=False,
                     user_identifier=user_identifier,
                     error=error_msg

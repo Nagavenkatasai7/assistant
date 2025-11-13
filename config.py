@@ -310,6 +310,11 @@ class APIConfig:
     KIMI_TEMPERATURE = 0.6  # Optimized for reasoning tasks
     KIMI_BASE_URL = "https://api.moonshot.ai/v1"  # Use .ai domain
 
+    # Claude Opus 4.1 API (Anthropic)
+    CLAUDE_MODEL = "claude-opus-4-20250514"  # Claude Opus 4.1 model
+    CLAUDE_MAX_TOKENS = 8192
+    CLAUDE_TEMPERATURE = 0.7  # Good balance for resume generation
+
     # Tavily AI Search API
     TAVILY_SEARCH_DEPTH = "advanced"  # "basic" or "advanced"
     TAVILY_MAX_RESULTS = 10
@@ -329,6 +334,21 @@ class APIConfig:
             'max_tokens': cls.KIMI_MAX_TOKENS,
             'temperature': cls.KIMI_TEMPERATURE,
             'base_url': cls.KIMI_BASE_URL,
+            'timeout': SecurityConfig.API_TIMEOUT_SECONDS
+        }
+
+    @classmethod
+    def get_claude_config(cls) -> Dict[str, Any]:
+        """
+        Get Claude Opus 4.1 API configuration
+
+        Returns:
+            Configuration dictionary
+        """
+        return {
+            'model': cls.CLAUDE_MODEL,
+            'max_tokens': cls.CLAUDE_MAX_TOKENS,
+            'temperature': cls.CLAUDE_TEMPERATURE,
             'timeout': SecurityConfig.API_TIMEOUT_SECONDS
         }
 
