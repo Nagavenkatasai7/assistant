@@ -1,6 +1,12 @@
 """
 Ultra ATS Resume Generator - Streamlit Application
 """
+# Fix SQLite3 version for Streamlit Cloud
+# This must come before any imports that might use sqlite3
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import logging
 import warnings
 
