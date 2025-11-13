@@ -164,23 +164,24 @@ def initialize_database():
             pending = migrator.get_pending_migrations()
 
             if pending:
-                st.info(f"🔄 Applying {len(pending)} optional database migrations...")
+                # Silently attempt migrations without showing UI messages
+                print(f"Attempting to apply {len(pending)} optional database migrations...")
                 success = migrator.migrate()
-
-                if not success:
-                    st.warning("⚠️ Database migrations partially failed. App will continue with base functionality.")
+                if success:
+                    print("✓ Database migrations applied successfully")
                 else:
-                    st.success("✅ Database migrations applied successfully")
+                    print("Note: Database migrations partially failed (optional optimizations)")
         except Exception as migration_error:
-            # Migrations are optional performance optimizations - don't block app startup
-            st.warning(f"⚠️ Could not apply database migrations: {migration_error}. App will continue with base functionality.")
+            # Migrations are optional - log but don't show warning to users
+            print(f"Note: Could not apply database migrations: {migration_error} (optional optimizations)")
 
         # Initialize connection pool with corruption recovery
         try:
             pool = DatabasePool(db_path, pool_size=10)
         except (sqlite3.DatabaseError, sqlite3.OperationalError) as db_error:
             if "malformed" in str(db_error).lower() or "corrupted" in str(db_error).lower():
-                st.warning(f"⚠️ Database file is corrupted. Recreating database...")
+                # Silently recover from database corruption
+                print(f"Detected corrupted database. Recreating...")
                 # Delete corrupted database files
                 for ext in ['', '-shm', '-wal', '-journal']:
                     try:
@@ -193,7 +194,7 @@ def initialize_database():
 
                 # Try again with fresh database
                 pool = DatabasePool(db_path, pool_size=10)
-                st.success("✅ Database recreated successfully")
+                print("✓ Database recreated successfully")
             else:
                 raise
 
