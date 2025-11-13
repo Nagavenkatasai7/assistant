@@ -65,3 +65,13 @@ Thumbs.db
 
 # Personal files
 Profile.pdf
+
+# Migration documentation with API keys
+API_QUICK_REFERENCE.md
+MIGRATION_COMPLETE.md
+MIGRATION_ARCHITECTURE.md
+
+# Test resumes
+test_resume_output.md
+adobe_resume_modern.md
+test_actual_resume.py

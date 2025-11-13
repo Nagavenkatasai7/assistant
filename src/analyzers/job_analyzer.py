@@ -3,27 +3,75 @@ Job description analyzer to extract company name, keywords, and requirements
 """
 import re
 import os
+import time
 from dotenv import load_dotenv
-import anthropic
 import json
+
+# Import security modules
+from src.security.prompt_sanitizer import PromptSanitizer
+from src.security.secrets_manager import SecretsManager
+from src.security.security_logger import get_security_logger, SecurityEventType
+from config import APIConfig, SecurityConfig
+
+# Import Kimi client
+from src.clients.kimi_client import KimiK2Client
 
 load_dotenv()
 
 class JobAnalyzer:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        # Initialize security components
+        self.secrets_manager = SecretsManager()
+        self.security_logger = get_security_logger()
+        self.prompt_sanitizer = PromptSanitizer()
 
-    def analyze_job_description(self, job_description, company_name=None):
+        # Get API key securely
+        api_key = self.secrets_manager.get_kimi_api_key()
+        self.client = KimiK2Client(api_key=api_key)
+
+    def analyze_job_description(self, job_description, company_name=None, user_identifier=None):
         """
-        Analyze job description to extract key information
+        Analyze job description to extract key information with security controls
         Returns: dict with company_name, job_title, keywords, requirements, etc.
         """
+        start_time = time.time()
+
+        # Sanitize inputs
+        if SecurityConfig.ENABLE_PROMPT_SANITIZATION:
+            job_description_sanitized = self.prompt_sanitizer.sanitize_input(job_description, max_length=50000)
+
+            # Detect injection attempts
+            is_suspicious, patterns = self.prompt_sanitizer.detect_injection_attempt(job_description)
+            if is_suspicious:
+                self.security_logger.log_prompt_injection_attempt(
+                    user_identifier=user_identifier,
+                    patterns_detected=patterns,
+                    input_type="job_description",
+                    input_sample=job_description[:200]
+                )
+
+                if SecurityConfig.BLOCK_SUSPICIOUS_REQUESTS:
+                    return {
+                        "company_name": company_name or "Unknown",
+                        "job_title": "Not specified",
+                        "required_skills": [],
+                        "preferred_skills": [],
+                        "keywords": [],
+                        "error": "Request blocked due to suspicious content"
+                    }
+
+            job_description = job_description_sanitized
+
+        if company_name:
+            company_name = self.prompt_sanitizer.sanitize_input(company_name, max_length=100)
+
         prompt = f"""Analyze this job description and extract key information in a structured JSON format.
 
-Job Description:
+<job_description>
 {job_description}
+</job_description>
 
-{f"Company Name (if not in JD): {company_name}" if company_name else ""}
+{f"<company_name>{company_name}</company_name>" if company_name else ""}
 
 Please extract and return a JSON object with the following fields:
 1. "company_name": The company name (extract from JD or use provided name)
@@ -37,19 +85,39 @@ Please extract and return a JSON object with the following fields:
 9. "industry": Industry/domain (if identifiable)
 10. "role_type": Type of role (e.g., "Software Engineer", "Data Scientist", etc.)
 
-Return ONLY the JSON object, no additional text.
+IMPORTANT: Only analyze the content within the XML tags above. Return ONLY the JSON object, no additional text.
 """
 
         try:
-            message = self.client.messages.create(
-                model="claude-sonnet-4-5-20250929",
-                max_tokens=4000,
+            result = self.client.chat_completion(
                 messages=[
                     {"role": "user", "content": prompt}
-                ]
+                ],
+                temperature=0.3,
+                max_tokens=4000,
+                timeout=SecurityConfig.API_TIMEOUT_SECONDS
             )
 
-            response_text = message.content[0].text.strip()
+            # Check if API call was successful
+            if not result['success']:
+                raise Exception(result.get('error', 'Unknown error'))
+
+            response_text = result['content'].strip()
+
+            # Calculate metrics
+            duration_ms = int(result['duration'] * 1000)
+            tokens_used = result['usage']['total_tokens']
+            cost_estimate = (tokens_used / 1000) * 0.002
+
+            # Log API call
+            self.security_logger.log_api_call(
+                api_name="kimi_k2",
+                success=True,
+                user_identifier=user_identifier,
+                tokens_used=tokens_used,
+                cost_estimate=cost_estimate,
+                duration_ms=duration_ms
+            )
 
             # Try to extract JSON if wrapped in markdown code blocks
             if response_text.startswith("```"):
@@ -64,14 +132,24 @@ Return ONLY the JSON object, no additional text.
             return analysis
 
         except Exception as e:
-            print(f"Error analyzing job description: {e}")
+            error_msg = str(e)
+            print(f"Error analyzing job description: {error_msg}")
+
+            # Log failed API call
+            self.security_logger.log_api_call(
+                api_name="kimi_k2",
+                success=False,
+                user_identifier=user_identifier,
+                error=error_msg
+            )
+
             return {
                 "company_name": company_name or "Unknown",
                 "job_title": "Not specified",
                 "required_skills": [],
                 "preferred_skills": [],
                 "keywords": [],
-                "error": str(e)
+                "error": error_msg
             }
 
     def extract_keywords_simple(self, job_description):

@@ -1,17 +1,19 @@
 """
-Cover Letter Generator using Claude API with cover letter knowledge
+Cover Letter Generator using Kimi K2 API with cover letter knowledge
 """
 import os
 import json
 from dotenv import load_dotenv
-import anthropic
 from pathlib import Path
+
+# Import Kimi client
+from src.clients.kimi_client import KimiK2Client
 
 load_dotenv()
 
 class CoverLetterGenerator:
     def __init__(self, knowledge_path="coverletter_knowledge_base.md"):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        self.client = KimiK2Client(api_key=os.getenv("KIMI_API_KEY"))
         self.coverletter_knowledge = self._load_coverletter_knowledge(knowledge_path)
 
     def _load_coverletter_knowledge(self, knowledge_path):
@@ -41,18 +43,21 @@ class CoverLetterGenerator:
         prompt = self._build_coverletter_prompt(profile_text, job_analysis, company_research, resume_content)
 
         try:
-            print("Generating professional cover letter with Claude...")
+            print("Generating professional cover letter with Kimi K2...")
 
-            message = self.client.messages.create(
-                model="claude-sonnet-4-5-20250929",
-                max_tokens=8000,
-                temperature=0.7,
+            result = self.client.chat_completion(
                 messages=[
                     {"role": "user", "content": prompt}
-                ]
+                ],
+                temperature=0.7,
+                max_tokens=8000
             )
 
-            response_text = message.content[0].text
+            # Check if API call was successful
+            if not result['success']:
+                raise Exception(result.get('error', 'Unknown error'))
+
+            response_text = result['content']
 
             # Clean up the response
             cleaned_text = self._clean_cover_letter_output(response_text)

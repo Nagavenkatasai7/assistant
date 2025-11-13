@@ -1,3 +1,4 @@
-from .perplexity_client import PerplexityClient
+# Utilities package
+# Note: PerplexityClient has been replaced by TavilyClient in src/clients/
 
-__all__ = ['PerplexityClient']
+__all__ = []

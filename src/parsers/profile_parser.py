@@ -17,7 +17,10 @@ class ProfileParser:
             reader = PdfReader(self.profile_pdf_path)
             text = ""
             for page in reader.pages:
-                text += page.extract_text() + "\n"
+                # Handle case where extract_text() returns None
+                page_text = page.extract_text()
+                if page_text:  # Only add if not None/empty
+                    text += page_text + "\n"
             return text
         except Exception as e:
             print(f"Error reading profile PDF: {e}")
