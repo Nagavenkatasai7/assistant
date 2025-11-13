@@ -74,6 +74,9 @@ class DatabasePool:
             'wal_checkpoints': 0
         }
 
+        # Track if WAL mode is available (will be set during connection creation)
+        self.wal_mode_enabled = False
+
         # Initialize pool
         self._initialize_pool()
 
@@ -100,9 +103,11 @@ class DatabasePool:
         # Try WAL mode, but fall back gracefully if not supported (e.g., on Streamlit Cloud)
         try:
             conn.execute("PRAGMA journal_mode = WAL")  # Write-Ahead Logging
+            self.wal_mode_enabled = True  # WAL mode successfully enabled
         except sqlite3.DatabaseError:
             # WAL mode not supported in this environment (e.g., Streamlit Cloud)
             # Fall back to default DELETE mode - no action needed
+            self.wal_mode_enabled = False
             pass
 
         conn.execute("PRAGMA synchronous = NORMAL")  # Balance durability/performance
@@ -340,6 +345,10 @@ class DatabasePool:
 
         Checkpoints every 1000 operations OR every hour (whichever comes first)
         """
+        # Skip if WAL mode is not enabled (e.g., on Streamlit Cloud)
+        if not self.wal_mode_enabled:
+            return
+
         current_time = time.time()
         time_since_last = current_time - self.last_checkpoint_time
 
@@ -373,6 +382,10 @@ class DatabasePool:
         Returns:
             True if successful, False otherwise
         """
+        # Skip if WAL mode is not enabled (e.g., on Streamlit Cloud)
+        if not self.wal_mode_enabled:
+            return True  # Return True since skipping is expected behavior
+
         try:
             with self.get_connection() as conn:
                 conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
