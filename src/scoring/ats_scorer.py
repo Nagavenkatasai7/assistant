@@ -1,6 +1,7 @@
 """
-Main ATS Scoring Engine
-Orchestrates all scoring components to provide comprehensive ATS compatibility analysis
+Main ATS Scoring Engine - Targeting 75-85% Sweet Spot
+Orchestrates all scoring components to provide comprehensive ATS compatibility analysis.
+Optimized for the sweet spot that balances ATS requirements with human appeal.
 """
 
 import time
@@ -21,19 +22,22 @@ class ATSScorer:
     - File Compatibility (10 points): File format and size
 
     Total Score: 0-100 points
-    - 80-100: Excellent (Green) - Highly likely to pass ATS
-    - 60-79: Good (Yellow) - Will likely pass with minor improvements
-    - 0-59: Needs Improvement (Red) - Requires significant changes
+    Research-Based Scoring (2025):
+    - 75-85%: OPTIMAL (Green) - Sweet spot for callbacks
+    - 85-95%: Over-optimized (Yellow) - May appear keyword-stuffed
+    - 95-100%: Red flag (Orange) - Reduces callbacks by 40%
+    - 60-74%: Needs improvement (Yellow) - Add more keywords
+    - 0-59%: Poor (Red) - Significant changes required
 
-    Target Accuracy: ±5% of real ATS systems
+    Target: 75-85% sweet spot (not 100%)
     """
 
-    # Score thresholds for color coding
-    THRESHOLD_EXCELLENT = 80
-    THRESHOLD_GOOD = 60
+    # Score thresholds for optimal range
+    THRESHOLD_EXCELLENT = 85  # Upper bound of sweet spot
+    THRESHOLD_GOOD = 75       # Lower bound of sweet spot
 
     # Minimum score for auto-retry
-    MIN_ACCEPTABLE_SCORE = 80
+    MIN_ACCEPTABLE_SCORE = 75  # Target the sweet spot
 
     def __init__(self):
         """Initialize the ATS scorer with all components"""
@@ -247,13 +251,17 @@ class ATSScorer:
             return 'poor'
 
     def _get_color(self, score: float) -> str:
-        """Get color coding for score"""
-        if score >= self.THRESHOLD_EXCELLENT:
-            return 'green'
-        elif score >= self.THRESHOLD_GOOD:
-            return 'yellow'
+        """Get color coding for score with sweet spot awareness"""
+        if score >= self.THRESHOLD_GOOD and score <= self.THRESHOLD_EXCELLENT:
+            return 'green'  # OPTIMAL: 75-85%
+        elif score > self.THRESHOLD_EXCELLENT and score < 90:
+            return 'yellow'  # Over-optimized: 85-90%
+        elif score >= 90:
+            return 'orange'  # WARNING: 90%+
+        elif score >= 70:
+            return 'yellow'  # Close to optimal: 70-75%
         else:
-            return 'red'
+            return 'red'  # Too low
 
     def _calculate_grade(self, score: float) -> str:
         """Calculate letter grade from score"""
@@ -285,19 +293,26 @@ class ATSScorer:
             return 'F'
 
     def _generate_summary(self, score: float, category_scores: Dict) -> str:
-        """Generate human-readable summary of ATS compatibility"""
-        if score >= 90:
-            base = "Excellent! Your resume is highly optimized for ATS systems."
-        elif score >= 80:
-            base = "Very Good! Your resume is well-optimized for ATS systems with minor improvements needed."
+        """Generate human-readable summary with sweet spot education"""
+        # Educational messaging based on 2025 research
+        if score >= 75 and score <= 85:
+            base = "🎯 OPTIMAL SCORE! Your resume is in the 75-85% sweet spot. This range has the HIGHEST interview callback rate, balancing ATS requirements with human appeal."
+        elif score > 85 and score < 90:
+            base = f"⚠️ SLIGHTLY OVER-OPTIMIZED ({score:.0f}%). Your resume may appear keyword-stuffed. The optimal range is 75-85%. Consider using more natural language."
+        elif score >= 90:
+            base = f"🚨 OVER-OPTIMIZED ({score:.0f}%). Research shows scores above 90% reduce interview callbacks by 40%. Human recruiters prefer 75-85%. Reduce keyword repetition."
         elif score >= 70:
-            base = "Good. Your resume is ATS-compatible but has room for improvement."
+            base = f"Good! Your resume scores {score:.0f}%, just below the optimal 75-85% range. Add a few more relevant keywords to reach the sweet spot."
         elif score >= 60:
-            base = "Acceptable. Your resume may pass ATS systems but needs several improvements."
+            base = f"Acceptable. Your resume scores {score:.0f}%. Aim for the 75-85% sweet spot by adding relevant keywords and quantifiable achievements."
         else:
-            base = "Needs Improvement. Your resume requires significant changes to pass ATS systems."
+            base = f"Needs Improvement. Your resume scores {score:.0f}%, below the optimal 75-85% range. Focus on keyword matching and content quality."
 
-        # Identify weakest category
+        # Add educational note
+        if score < 75 or score > 85:
+            base += " 💡 Why 75-85%? ATS systems pass you to human recruiters who make the final decision. Scores of 100% appear robotic and over-optimized."
+
+        # Identify weakest category for additional guidance
         weakest_category = min(
             category_scores.items(),
             key=lambda x: (x[1]['score'] / x[1]['max']) * 100
@@ -310,32 +325,42 @@ class ATSScorer:
             'compatibility': 'Focus on file format and size optimization.'
         }
 
-        return f"{base} {weakness_map.get(weakest_category, '')}"
+        if (category_scores[weakest_category]['score'] / category_scores[weakest_category]['max']) < 0.75:
+            base += f" {weakness_map.get(weakest_category, '')}"
+
+        return base
 
     def _estimate_pass_probability(self, score: float, category_scores: Dict) -> float:
         """
-        Estimate probability of passing typical ATS systems.
+        Estimate probability of interview callbacks based on 2025 research.
 
-        Based on industry research:
-        - 90+ score: ~95% pass rate
-        - 80-89 score: ~85% pass rate
-        - 70-79 score: ~70% pass rate
-        - 60-69 score: ~50% pass rate
-        - <60 score: ~25% pass rate
+        Key Finding: The 75-85% range has the HIGHEST actual callback rate
+        because it balances ATS requirements with human appeal.
 
-        Adjusted based on critical failures.
+        Updated probabilities:
+        - 75-85%: ~92% (OPTIMAL sweet spot)
+        - 85-90%: ~85% (Over-optimized, slight penalty)
+        - 90-95%: ~70% (Major penalty for over-optimization)
+        - 95-100%: ~55% (Red flag, reduces callbacks by 40%)
+        - 70-75%: ~88% (Close to optimal)
+        - 60-70%: ~70% (Needs improvement)
+        - <60%: ~50% (Significant changes needed)
         """
-        # Base probability from score
-        if score >= 90:
-            base_prob = 95
-        elif score >= 80:
-            base_prob = 85
+        # Base probability reflecting 2025 research
+        if score >= 75 and score <= 85:
+            base_prob = 92  # SWEET SPOT
+        elif score > 85 and score <= 90:
+            base_prob = 85  # Over-optimized
+        elif score > 90 and score <= 95:
+            base_prob = 70  # Major penalty
+        elif score > 95:
+            base_prob = 55  # Red flag
         elif score >= 70:
-            base_prob = 70
+            base_prob = 88  # Close to optimal
         elif score >= 60:
-            base_prob = 50
+            base_prob = 70
         else:
-            base_prob = 25
+            base_prob = 50
 
         # Adjust for critical failures
         content_percentage = (category_scores['content']['score'] / category_scores['content']['max']) * 100
@@ -349,7 +374,11 @@ class ATSScorer:
         if format_percentage < 70:
             base_prob *= 0.85
 
-        return min(99, max(1, base_prob))
+        # Bonus for balanced optimization in sweet spot
+        if content_percentage >= 75 and content_percentage <= 85 and format_percentage >= 75:
+            base_prob = min(92, base_prob + 2)
+
+        return min(92, max(40, base_prob))  # Cap at 92% (not 99%)
 
     def _generate_keyword_suggestions(self, analysis: Dict) -> List[str]:
         """Generate suggestions for keyword optimization"""

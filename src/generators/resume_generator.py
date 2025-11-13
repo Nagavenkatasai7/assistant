@@ -369,9 +369,17 @@ Full Job Analysis:
    - Use strong action verbs relevant to the role
    - Tailor experience descriptions to emphasize relevant projects and responsibilities
    - Ensure Skills section is comprehensive and matches required/preferred skills
-   - Optimize for the specific job title - include it prominently if candidate has that exact title
+   - **Job Title Prominence**: Include the exact job title "{job_title}" prominently in the Professional Summary or Skills section to match ATS searches
 
-5. **ATS Scoring Optimization**:
+5. **Human Recruiter Optimization (6-Second Scan)**:
+   - **Top 1/3 Critical**: Most important info must be in the top third of page 1 (name, contact, summary, key skills)
+   - **Job Title Matching**: Make it immediately clear you're qualified for "{job_title}" role
+   - **Quantified Achievements**: Lead with numbers that pop (%, $, time saved, scale)
+   - **Action Verbs**: Start bullets with powerful verbs: Achieved, Drove, Increased, Led, Built, Optimized, Delivered
+   - **Scannable Format**: Short bullet points (1-2 lines max), clear headers, strategic white space
+   - **Compelling Story**: Don't just list responsibilities - show progression, impact, and growth
+
+6. **ATS Scoring Optimization**:
    - Target 90%+ keyword match with job description
    - Ensure all required skills are explicitly mentioned
    - Include industry-specific terminology
