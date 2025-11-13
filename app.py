@@ -441,9 +441,6 @@ def main():
         # Template Selection Section
         st.subheader("📄 Select Resume Template")
 
-        # Get available templates info
-        templates_info = enhanced_pdf_generator.get_all_templates()
-
         col_t1, col_t2, col_t3 = st.columns(3)
 
         with col_t1:
