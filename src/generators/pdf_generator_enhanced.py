@@ -1,48 +1,30 @@
 """
-Enhanced PDF Generator with Multiple Template Support
-Supports Original, Modern Two-Column, and Harvard Business School templates
+Enhanced PDF Generator with ATS-Optimized Template
+Supports clean, single-column ATS-friendly format
 """
 from pathlib import Path
 from .pdf_generator import PDFGenerator  # Original template
-from .pdf_template_modern import ModernProfessionalTemplate
-from .pdf_template_harvard import HarvardBusinessTemplate
 
 
 class EnhancedPDFGenerator:
     """
-    Enhanced PDF generator supporting multiple ATS-optimized templates.
+    Enhanced PDF generator supporting ATS-optimized template.
 
     Templates:
     1. Original: Simple single-column format (85-90% ATS score)
-    2. Modern Two-Column: Professional two-column layout (95-100% ATS score)
-    3. Harvard Business: HBS-style single column (98-100% ATS score)
     """
 
     TEMPLATES = {
         'original': {
-            'name': 'Original Simple',
+            'name': 'ATS-Optimized',
             'description': 'Clean single-column format',
             'ats_score': '85-90%',
-            'best_for': 'Entry to mid-level positions',
+            'best_for': 'All positions - maximum ATS compatibility',
             'class': PDFGenerator
-        },
-        'modern': {
-            'name': 'Modern Professional',
-            'description': 'Two-column layout with sidebar',
-            'ats_score': '95-100%',
-            'best_for': 'Technical and creative roles',
-            'class': ModernProfessionalTemplate
-        },
-        'harvard': {
-            'name': 'Harvard Business',
-            'description': 'Traditional HBS format',
-            'ats_score': '98-100%',
-            'best_for': 'Business, consulting, and executive roles',
-            'class': HarvardBusinessTemplate
         }
     }
 
-    def __init__(self, template='modern'):
+    def __init__(self, template='original'):
         """
         Initialize with specified template.
 
@@ -56,7 +38,7 @@ class EnhancedPDFGenerator:
     def _initialize_generator(self):
         """Initialize the appropriate generator based on template"""
         if self.current_template not in self.TEMPLATES:
-            self.current_template = 'modern'  # Default to modern
+            self.current_template = 'original'  # Default to original
 
         template_class = self.TEMPLATES[self.current_template]['class']
         self.generator = template_class()
@@ -169,26 +151,8 @@ class EnhancedPDFGenerator:
         Returns:
             Recommended template key
         """
-        # Business roles → Harvard
-        if industry and any(keyword in industry.lower() for keyword in
-                           ['consulting', 'finance', 'banking', 'investment', 'private equity']):
-            return 'harvard'
-
-        if job_title and any(keyword in job_title.lower() for keyword in
-                            ['director', 'vp', 'president', 'executive', 'partner', 'manager']):
-            return 'harvard'
-
-        # Technical/Creative roles → Modern
-        if job_title and any(keyword in job_title.lower() for keyword in
-                            ['engineer', 'developer', 'designer', 'architect', 'data', 'analyst']):
-            return 'modern'
-
-        # Entry level → Original
-        if experience_years and experience_years < 3:
-            return 'original'
-
-        # Default to modern for best ATS scores
-        return 'modern'
+        # Only one template available - always return original
+        return 'original'
 
 
 def test_enhanced_generator():

@@ -33,11 +33,10 @@ from src.parsers import ProfileParser
 from src.analyzers import JobAnalyzer
 from src.clients.tavily_client import TavilyClient
 from src.generators import ResumeGenerator
-from src.generators.pdf_generator import PDFGenerator
-from src.generators.pdf_generator_enhanced import EnhancedPDFGenerator  # New enhanced generator
 from src.generators.coverletter_generator import CoverLetterGenerator
 from src.generators.coverletter_pdf_generator import CoverLetterPDFGenerator
 from src.generators.docx_generator import DOCXGenerator
+from src.generators.latex_resume_pipeline import LaTeXResumePipeline  # LaTeX integration
 
 # Security modules
 from src.security.input_validator import InputValidator
@@ -158,6 +157,21 @@ if 'last_auto_save' not in st.session_state:
     st.session_state.last_auto_save = None
 if 'resume_id' not in st.session_state:
     st.session_state.resume_id = None
+if 'selected_model' not in st.session_state:
+    st.session_state.selected_model = "claude-sonnet-4.5"
+
+# CRITICAL: Session cleanup - delete old Profile.pdf on session start
+if 'session_initialized' not in st.session_state:
+    # First load of this session - clean up old files
+    if Path("Profile.pdf").exists():
+        try:
+            os.remove("Profile.pdf")
+            print("🗑️ Deleted old Profile.pdf from previous session")
+        except Exception as e:
+            print(f"Warning: Could not delete old Profile.pdf: {e}")
+    st.session_state.session_initialized = True
+    st.session_state.resume_uploaded_this_session = False
+    print("✨ New session initialized - ready for fresh resume upload")
 
 @st.cache_resource
 def initialize_database():
@@ -248,19 +262,18 @@ def initialize_database():
         st.stop()
         return None, None, None
 
-def initialize_components(db, model="kimi-k2"):
-    """Initialize all components with model selection"""
+def initialize_components(db, model="claude-sonnet-4.5"):
+    """Initialize all components with model selection - LaTeX only"""
     profile_parser = ProfileParser()
-    job_analyzer = JobAnalyzer()
+    job_analyzer = JobAnalyzer(model=model)  # Pass model to JobAnalyzer
     tavily_client = TavilyClient()
     resume_generator = ResumeGenerator(model=model)
-    pdf_generator = PDFGenerator()
-    enhanced_pdf_generator = EnhancedPDFGenerator()  # New enhanced generator
+    latex_pipeline = LaTeXResumePipeline()  # LaTeX pipeline for professional resumes
     coverletter_generator = CoverLetterGenerator()
     coverletter_pdf_generator = CoverLetterPDFGenerator()
     docx_generator = DOCXGenerator()
 
-    return profile_parser, job_analyzer, tavily_client, resume_generator, pdf_generator, enhanced_pdf_generator, coverletter_generator, coverletter_pdf_generator, docx_generator
+    return profile_parser, job_analyzer, tavily_client, resume_generator, latex_pipeline, coverletter_generator, coverletter_pdf_generator, docx_generator
 
 def main():
     # Generate or retrieve session ID for rate limiting
@@ -287,22 +300,55 @@ def main():
     # Initialize optimized database
     db, pool, cache, disk_validator = initialize_database()
 
+    # Initialize generators at module level to avoid UnboundLocalError
+    # These are needed for export functions that can be accessed outside the generation flow
+    # FIX: Add error handling to prevent app crashes if generators fail to initialize
+    docx_generator = None
+    coverletter_generator = None
+    coverletter_pdf_generator = None
+
+    try:
+        docx_generator = DOCXGenerator()
+    except Exception as e:
+        st.warning("⚠️ DOCX export may be unavailable. Resume generation will continue.")
+
+    try:
+        coverletter_generator = CoverLetterGenerator()
+    except Exception as e:
+        st.warning("⚠️ Cover letter generation may be unavailable. Resume generation will continue.")
+
+    try:
+        coverletter_pdf_generator = CoverLetterPDFGenerator()
+    except Exception as e:
+        st.warning("⚠️ Cover letter PDF export may be unavailable. Resume generation will continue.")
+
     # Model selection - store in session state for persistence
     if 'selected_model' not in st.session_state:
-        st.session_state.selected_model = "claude-opus-4"  # Default to Claude Opus 4.1 (Fast)
+        st.session_state.selected_model = "claude-sonnet-4.5"  # Default to Claude Sonnet 4.5
 
     # Sidebar
     with st.sidebar:
         st.header("⚙️ Settings")
 
-        # Check for Profile.pdf or allow upload
+        # Check for Profile.pdf uploaded in THIS session
         profile_exists = Path("Profile.pdf").exists()
+        uploaded_this_session = st.session_state.get('resume_uploaded_this_session', False)
 
-        if profile_exists:
-            st.success("✓ Profile.pdf found")
+        if profile_exists and uploaded_this_session:
+            st.success("✓ Profile uploaded for this session")
+            if st.button("🗑️ Clear and upload new resume"):
+                try:
+                    os.remove("Profile.pdf")
+                    st.session_state.resume_uploaded_this_session = False
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error removing old resume: {e}")
         else:
-            st.warning("⚠️ Profile.pdf not found")
-            st.info("Upload your profile PDF below:")
+            if profile_exists and not uploaded_this_session:
+                st.warning("⚠️ Old resume file found from previous session - please upload fresh resume")
+            else:
+                st.warning("⚠️ No resume uploaded yet")
+            st.info("📤 Upload your resume PDF for this session:")
 
             uploaded_profile = st.file_uploader(
                 "Upload Profile PDF",
@@ -332,7 +378,12 @@ def main():
                                 # Save temporarily with explicit error handling
                                 with open(safe_filename, "wb") as f:
                                     f.write(uploaded_profile.read())
-                                st.success("✓ Profile uploaded successfully!")
+
+                                # Mark as uploaded in THIS session
+                                st.session_state.resume_uploaded_this_session = True
+
+                                st.success("✓ Profile uploaded successfully for this session!")
+                                st.info("You can now generate resumes using this profile.")
                                 st.rerun()
                         except Exception as e:
                             st.error(f"✗ Error saving profile: {str(e)}")
@@ -438,43 +489,6 @@ def main():
                 else:
                     st.caption("✅ Good length")
 
-        # Template Selection Section
-        st.subheader("📄 Select Resume Template")
-
-        col_t1, col_t2, col_t3 = st.columns(3)
-
-        with col_t1:
-            st.markdown("**🎯 Original Simple**")
-            st.caption("Clean single-column format")
-            st.info("ATS Score: 85-90%")
-            st.caption("Best for: Entry to mid-level")
-
-        with col_t2:
-            st.markdown("**✨ Modern Professional**")
-            st.caption("Two-column with sidebar")
-            st.info("ATS Score: 95-100%")
-            st.caption("Best for: Technical roles")
-
-        with col_t3:
-            st.markdown("**🏛️ Harvard Business**")
-            st.caption("Traditional HBS format")
-            st.info("ATS Score: 98-100%")
-            st.caption("Best for: Business/Executive")
-
-        # Template selection radio buttons
-        selected_template = st.radio(
-            "Choose Template:",
-            options=['modern', 'harvard', 'original'],
-            format_func=lambda x: {
-                'original': '🎯 Original Simple',
-                'modern': '✨ Modern Professional (Recommended)',
-                'harvard': '🏛️ Harvard Business'
-            }[x],
-            index=0,  # Default to Modern
-            horizontal=True,
-            help="Select the resume template that best fits your target role"
-        )
-
         st.divider()
 
         # Model Selection
@@ -483,28 +497,28 @@ def main():
         col_model1, col_model2 = st.columns(2)
 
         with col_model1:
-            st.markdown("**Claude Opus 4.1 (Fast)**")
-            st.caption("Anthropic's fast reasoning model")
-            st.info("Speed: Very Fast | Quality: Excellent")
-            st.caption("Best for: Quick iterations")
+            st.markdown("**Claude Sonnet 4.5 (Recommended)**")
+            st.caption("Anthropic's latest balanced model")
+            st.info("Speed: Fast | Quality: Excellent")
+            st.caption("Best for: All resume generation")
 
         with col_model2:
-            st.markdown("**Kimi K2 (High Quality)**")
-            st.caption("Moonshot AI's deep reasoning model")
-            st.info("Speed: Moderate | Quality: Superior")
-            st.caption("Best for: Important applications")
+            st.markdown("**Kimi K2 (Deep Reasoning)**")
+            st.caption("Moonshot AI's deep thinking model")
+            st.info("Speed: Slow (2-3 min) | Quality: Superior")
+            st.caption("Best for: Complex analysis (requires patience)")
 
         # Model selection radio buttons
         selected_model = st.radio(
             "Choose AI Model:",
-            options=['claude-opus-4', 'kimi-k2'],
+            options=['claude-sonnet-4.5', 'kimi-k2'],
             format_func=lambda x: {
-                'claude-opus-4': '⚡ Claude Opus 4.1 (Fast)',
-                'kimi-k2': '🎯 Kimi K2 (High Quality - Default)'
+                'claude-sonnet-4.5': '⚡ Claude Sonnet 4.5 (Recommended)',
+                'kimi-k2': '🎯 Kimi K2 (Deep Reasoning - Slow)'
             }[x],
-            index=0,  # Default to Claude Opus 4.1
+            index=0,  # Default to Claude Sonnet 4.5
             horizontal=True,
-            help="Select the AI model for resume generation. Claude is faster, Kimi provides deeper analysis."
+            help="Claude Sonnet 4.5 is recommended for speed and quality. Kimi K2 takes 2-3 minutes but provides deeper analysis."
         )
 
         # Store selected model in session state
@@ -566,11 +580,42 @@ def main():
                     st.sidebar.warning(f"Rate limit reached. Reset in {reset_time}s")
                     st.stop()
 
+                # CRITICAL: Clear ALL old session data before generating new resume
+                # This ensures fresh content in editor and preview for each new generation
+                st.session_state.generated_resume = None
+                st.session_state.editor_content = None
+                st.session_state.resume_id = None
+                st.session_state.profile_text = None
+                st.session_state.job_analysis = None
+                st.session_state.company_research = None
+                st.session_state.current_job_id = None
+                st.session_state.generated_cover_letter = None
+                st.session_state.last_auto_save = None
+
+                # Clear any cached markdown or PDF paths
+                if 'resume_markdown' in st.session_state:
+                    st.session_state.resume_markdown = None
+                if 'pdf_path' in st.session_state:
+                    st.session_state.pdf_path = None
+                if 'tex_path' in st.session_state:
+                    st.session_state.tex_path = None
+                if 'show_versions' in st.session_state:
+                    st.session_state.show_versions = False
+
+                print("🧹 Cleared ALL old session data - starting completely fresh generation")
+
                 # Show remaining quota in sidebar
                 remaining_quota = limiter.get_remaining_quota(user_id, 'hourly')
                 st.sidebar.success(f"✅ Remaining quota: {remaining_quota}/10 this hour")
-                # Initialize components with selected model
-                profile_parser, job_analyzer, tavily_client, resume_generator, pdf_generator, enhanced_pdf_generator, coverletter_generator, coverletter_pdf_generator, docx_generator = initialize_components(db, model=selected_model)
+
+                # Get selected model from session state (FIX: Don't use local variable)
+                active_model = st.session_state.selected_model
+
+                # DEBUG: Show which model is being used
+                st.info(f"🔍 DEBUG: Using model = '{active_model}'")
+
+                # Initialize components with selected model (LaTeX only)
+                profile_parser, job_analyzer, tavily_client, resume_generator, latex_pipeline, coverletter_generator, coverletter_pdf_generator, docx_generator = initialize_components(db, model=active_model)
 
                 # Show progress
                 with st.spinner("Generating your ATS-optimized resume..."):
@@ -580,6 +625,13 @@ def main():
                         st.info("📄 Parsing your profile...")
                         profile_text = profile_parser.get_profile_summary()
                         st.session_state.profile_text = profile_text  # Save for cover letter
+
+                        # DEBUG: Show what was extracted
+                        st.info(f"✅ Extracted {len(profile_text)} characters from your resume")
+                        with st.expander("🔍 Click to verify extracted resume data"):
+                            st.text_area("Resume content being sent to AI", profile_text, height=300)
+                            st.warning("⚠️ IMPORTANT: Verify this contains YOUR actual resume content!")
+
                         progress_bar.progress(20)
 
                         # Step 2: Analyze job description
@@ -608,8 +660,8 @@ def main():
                             st.session_state.company_research = company_research
                         progress_bar.progress(60)
 
-                        # Step 4: Check for duplicates
-                        st.info("🔎 Checking for existing resumes...")
+                        # Step 4: Insert job description (ALWAYS generate fresh - no duplicate check)
+                        st.info("🔎 Preparing to generate resume...")
                         job_id = db.insert_job_description(
                             company_name,
                             job_description,
@@ -619,17 +671,9 @@ def main():
                         )
                         st.session_state.current_job_id = job_id  # Save for cover letter
 
-                        existing_resume = db.check_resume_exists(job_id)
-                        if existing_resume:
-                            st.warning(f"⚠️ Resume already exists for this job (created {existing_resume['created_at']})")
-                            use_existing = st.checkbox("Use existing resume", value=False)
-                            if not use_existing:
-                                st.info("Generating new resume...")
-                            else:
-                                st.success("Using existing resume")
-                                progress_bar.progress(100)
-                                st.balloons()
-                                return
+                        # DISABLED: Duplicate check removed to always generate fresh resumes
+                        # This ensures every generation creates new content tailored to the current job
+                        st.info("✨ Generating completely fresh resume for this job...")
 
                         progress_bar.progress(70)
 
@@ -647,22 +691,109 @@ def main():
 
                         progress_bar.progress(90)
 
-                        # Step 6: Generate PDF
-                        st.info("📝 Creating PDF...")
+                        # Step 6: Generate PDF using LaTeX
+                        st.info("📝 Creating professional LaTeX PDF...")
                         output_dir = Path("generated_resumes")
                         output_dir.mkdir(exist_ok=True)
 
-                        # Create filename: Venkat_CompanyName.pdf
+                        # Create filename: Venkat_CompanyName
                         safe_company_name = "".join(c for c in company_name if c.isalnum() or c in (' ', '-', '_')).strip()
-                        pdf_filename = f"Venkat_{safe_company_name}.pdf"
-                        pdf_path = output_dir / pdf_filename
+                        base_filename = f"Venkat_{safe_company_name}"
 
-                        # Use enhanced PDF generator with selected template
-                        enhanced_pdf_generator.set_template(selected_template)
-                        enhanced_pdf_generator.markdown_to_pdf(resume_result['content'], str(pdf_path))
+                        # Parse AI-generated resume into structured data
+                        from src.parsers.ai_resume_parser import AIResumeParser
+                        ai_parser = AIResumeParser()
+                        structured_resume = ai_parser.parse_markdown_resume(resume_result['content'])
 
-                        # Store selected template in session state for later use
-                        st.session_state.selected_template = selected_template
+                        # Parse profile for contact information only
+                        import re
+                        profile_data = profile_parser.parse_profile()
+
+                        # Extract links from profile
+                        links = []
+                        if profile_data.get('personal_info', {}).get('linkedin'):
+                            links.append('https://' + profile_data['personal_info']['linkedin'])
+                        if profile_data.get('personal_info', {}).get('github'):
+                            links.append('https://' + profile_data['personal_info']['github'])
+
+                        # Build structured resume data for LaTeX
+                        # Merge AI-generated structured data with profile contact info
+
+                        # Use AI-parsed header but override with profile contact info if available
+                        header_data = structured_resume.get('header', {})
+                        if profile_data and profile_data.get('personal_info'):
+                            profile_info = profile_data['personal_info']
+                            if profile_info.get('email'):
+                                header_data['email'] = profile_info['email']
+                            if profile_info.get('linkedin'):
+                                header_data['linkedin'] = profile_info['linkedin']
+                            if profile_info.get('github'):
+                                header_data['github'] = profile_info['github']
+                            # Use name from profile if available
+                            if profile_info.get('name'):
+                                header_data['name'] = profile_info['name']
+
+                        # Add job title from job analysis
+                        header_data['title'] = job_analysis.get('job_title', 'Software Engineer')
+
+                        # Use AI-generated content for all sections
+                        resume_data = {
+                            'header': header_data,
+                            'summary': structured_resume.get('summary', 'Experienced professional with expertise in software development and modern technologies.'),
+                            'skills': structured_resume.get('skills', {
+                                'ai_ml': ['Machine Learning', 'Deep Learning', 'LLMs', 'RAG Systems'],
+                                'product_dev': ['Agile/Scrum', 'Product Strategy', 'User Research'],
+                                'programming': ['Python', 'JavaScript', 'SQL', 'Git', 'Docker', 'AWS']
+                            }),
+                            'education': structured_resume.get('education', [{
+                                'institution': 'University',
+                                'degree': 'Bachelor of Science in Computer Science',
+                                'gpa': '3.8/4.0',
+                                'dates': '2020 – 2024'
+                            }]),
+                            'projects': structured_resume.get('projects', []),
+                            'additional': structured_resume.get('additional', {}),
+                            'dynamic_sections': structured_resume.get('dynamic_sections', {})
+                        }
+
+                        # Log dynamic sections for debugging
+                        if resume_data.get('dynamic_sections'):
+                            section_names = list(resume_data['dynamic_sections'].keys())
+                            print(f"📋 Dynamic sections detected for PDF: {section_names}")
+                        else:
+                            print("⚠️  No dynamic sections detected in parsed markdown")
+
+                        # Ensure we have at least some projects
+                        if not resume_data['projects']:
+                            resume_data['projects'] = [
+                                {
+                                    'title': 'Technical Project',
+                                    'dates': '2024 – Present',
+                                    'technologies': 'Python, Modern Stack',
+                                    'bullets': [
+                                        'Developed innovative solutions',
+                                        'Implemented best practices',
+                                        'Delivered high-quality results'
+                                    ]
+                                }
+                            ]
+
+                        # Generate LaTeX resume
+                        tex_path, pdf_path, error = latex_pipeline.generate_resume(
+                            resume_data=resume_data,
+                            output_path=str(output_dir / base_filename),
+                            compile_pdf=True
+                        )
+
+                        if error:
+                            st.error(f"❌ LaTeX PDF generation failed: {error}")
+                            st.info("Falling back to plain text resume...")
+                            # Save markdown as fallback
+                            pdf_path = str(output_dir / f"{base_filename}.txt")
+                            Path(pdf_path).write_text(resume_result['content'], encoding='utf-8')
+                        else:
+                            st.success(f"✓ Professional LaTeX PDF generated!")
+
                         progress_bar.progress(95)
 
                         # Step 7: Save to database
@@ -676,7 +807,7 @@ def main():
                         progress_bar.progress(100)
 
                         # Success!
-                        model_display = "Claude Opus 4.1" if selected_model == "claude-opus-4" else "Kimi K2"
+                        model_display = "Claude Sonnet 4.5" if active_model == "claude-sonnet-4.5" else "Kimi K2"
                         st.success(f"✅ ATS-Optimized Resume Generated Successfully using {model_display}!")
                         st.balloons()
 
@@ -687,13 +818,13 @@ def main():
                         # ENHANCED ATS SCORING
                         with st.spinner("📊 Analyzing ATS compatibility with enhanced scorer..."):
                             try:
-                                # Use enhanced scorer with template awareness
+                                # Use enhanced scorer (LaTeX template)
                                 score_result = enhanced_ats_scorer.score_resume(
                                     resume_content=resume_result['content'],
                                     job_keywords=job_analysis.get('keywords', []),
                                     required_skills=job_analysis.get('required_skills', []),
                                     file_format='pdf',
-                                    template_type=selected_template  # Pass template type
+                                    template_type='latex'  # Always LaTeX template
                                 )
 
                                 # Display score with color coding
@@ -791,12 +922,24 @@ def main():
                 # Download button - defensive check for pdf_path
                 pdf_path = st.session_state.generated_resume.get('pdf_path', '')
                 if Path(pdf_path).exists():
+                    # Detect file type based on extension
+                    file_ext = Path(pdf_path).suffix.lower()
+                    if file_ext == '.pdf':
+                        mime_type = "application/pdf"
+                        button_label = "⬇️ Download PDF"
+                    elif file_ext == '.txt':
+                        mime_type = "text/plain"
+                        button_label = "⬇️ Download Text"
+                    else:
+                        mime_type = "application/octet-stream"
+                        button_label = "⬇️ Download Resume"
+
                     with open(pdf_path, 'rb') as f:
                         st.download_button(
-                            "⬇️ Download PDF",
+                            button_label,
                             f.read(),
                             file_name=Path(pdf_path).name,
-                            mime="application/pdf",
+                            mime=mime_type,
                             use_container_width=True,
                             key="download_generated_resume"
                         )
@@ -819,15 +962,23 @@ def main():
             edit_tab, preview_tab = st.tabs(["📝 Edit Markdown", "👁️ Preview"])
 
             with edit_tab:
-                # Initialize editor content - defensive checks
-                resume_content = st.session_state.generated_resume.get('content', '')
-                if 'editor_content' not in st.session_state:
+                # FIX: Initialize editor content with comprehensive null safety checks
+                # Protect against None or corrupted session state
+                if st.session_state.get('generated_resume') and isinstance(st.session_state.generated_resume, dict):
+                    resume_content = st.session_state.generated_resume.get('content', '')
+                else:
+                    # Fallback: No valid resume in session state
+                    resume_content = ''
+                    st.warning("⚠️ Resume state invalid. Please regenerate the resume.")
+
+                # Initialize editor_content if not present or if it's None/empty
+                if not st.session_state.get('editor_content'):
                     st.session_state.editor_content = resume_content
 
-                # Editable text area - use defensive get()
+                # Editable text area with safe fallback value
                 edited_content = st.text_area(
                     "Edit your resume content below:",
-                    value=resume_content if resume_content else "# No content available",
+                    value=resume_content if resume_content else "# No content available\n\nPlease generate a resume first.",
                     height=600,
                     key="resume_editor",
                     help="Edit the markdown content. Changes appear in Preview tab. Use Markdown formatting: **bold**, *italic*, ## headers, - bullets"
@@ -851,35 +1002,43 @@ def main():
                 with col1:
                     if st.button("💾 Save Changes", type="primary", use_container_width=True, key="save_resume_btn"):
                         try:
-                            # Defensive check before updating
-                            if not isinstance(st.session_state.generated_resume, dict):
-                                st.error("Invalid resume state. Please regenerate the resume.")
-                            else:
-                                # Update session state
-                                st.session_state.generated_resume['content'] = edited_content
+                            # FIX: Comprehensive validation before any state updates
+                            # Check 1: Verify generated_resume exists and is a dict
+                            if not st.session_state.get('generated_resume') or not isinstance(st.session_state.generated_resume, dict):
+                                st.error("❌ Invalid resume state. Please regenerate the resume.")
+                                st.stop()  # Prevent further execution
 
-                            # Update database - defensive check for resume_id
-                            if st.session_state.get('resume_id'):
-                                db.update_resume_content(
-                                    st.session_state.resume_id,
-                                    edited_content
-                                )
+                            # Check 2: Verify resume_id exists before database update
+                            if not st.session_state.get('resume_id'):
+                                st.error("❌ Resume ID not found. Please regenerate the resume.")
+                                st.stop()
 
-                                # Regenerate PDF with edited content using selected template
-                                pdf_path = st.session_state.generated_resume['pdf_path']
-                                # Get the currently selected template (store in session state)
-                                current_template = st.session_state.get('selected_template', 'modern')
-                                enhanced_pdf_generator.set_template(current_template)
-                                enhanced_pdf_generator.markdown_to_pdf(edited_content, pdf_path)
+                            # All validations passed - proceed with save
+                            # Update session state content
+                            st.session_state.generated_resume['content'] = edited_content
+
+                            # Update database with retry handling (already in update_resume_content)
+                            success = db.update_resume_content(
+                                st.session_state.resume_id,
+                                edited_content
+                            )
+
+                            if success:
+                                # FIX: Safe PDF path access with fallback
+                                # Note: PDF regeneration from edited markdown not yet supported for LaTeX
+                                pdf_path = st.session_state.generated_resume.get('pdf_path', '')
+                                if pdf_path:
+                                    st.info("ℹ️ Note: PDF reflects original content. Markdown updated successfully.")
 
                                 st.success("✅ Resume saved successfully!")
                                 st.session_state.last_auto_save = datetime.now()
-
                             else:
-                                st.error("Resume ID not found. Please regenerate the resume.")
+                                st.error("❌ Failed to save resume to database. Please try again.")
 
+                        except KeyError as e:
+                            st.error(f"❌ Missing required field: {e}. Please regenerate the resume.")
                         except Exception as e:
-                            st.error(f"Error saving resume: {e}")
+                            st.error(f"❌ Error saving resume: {e}")
 
                 with col2:
                     if st.button("↩️ Undo Changes", use_container_width=True, key="undo_resume_btn"):

@@ -34,13 +34,13 @@ except ImportError:
 load_dotenv()
 
 class ResumeGenerator:
-    def __init__(self, ats_knowledge_path="ats_knowledge_base.md", model="kimi-k2"):
+    def __init__(self, ats_knowledge_path="ats_knowledge_base_comprehensive.md", model="kimi-k2"):
         """
         Initialize ResumeGenerator with model selection
 
         Args:
             ats_knowledge_path: Path to ATS knowledge base file
-            model: Model to use - "kimi-k2" (default) or "claude-opus-4"
+            model: Model to use - "claude-sonnet-4.5" (default) or "kimi-k2"
         """
         # Initialize security components
         self.secrets_manager = SecretsManager()
@@ -52,21 +52,25 @@ class ResumeGenerator:
 
         # Initialize appropriate client based on model selection
         try:
-            if model == "claude-opus-4":
-                # Use Claude Opus 4.1
+            print(f"[DEBUG] ResumeGenerator initializing with model: {model}")
+            if model == "claude-sonnet-4.5" or model == "claude-opus-4":
+                # Use Claude Sonnet 4.5 (or legacy opus-4)
                 api_key = self.secrets_manager.get_anthropic_api_key()
                 if not api_key:
                     # Fallback to Kimi if Claude key not available
-                    print("Warning: Anthropic API key not found, falling back to Kimi K2")
+                    print("❌ Warning: Anthropic API key not found, falling back to Kimi K2")
                     self.model = "kimi-k2"
                     api_key = self.secrets_manager.get_kimi_api_key()
                     self.client = KimiK2Client(api_key=api_key)
                     self.api_name = "kimi_k2"
                 else:
+                    print(f"✅ Initializing ClaudeOpusClient (Sonnet 4.5) with API key: {api_key[:10]}...")
                     self.client = ClaudeOpusClient(api_key=api_key)
-                    self.api_name = "claude_opus_4"
+                    self.api_name = "claude_sonnet_4_5"
+                    print(f"✅ Claude client initialized. Model: {self.client.model}")
             else:
                 # Use Kimi K2 (default)
+                print(f"[DEBUG] Using Kimi K2 (model parameter was: {model})")
                 api_key = self.secrets_manager.get_kimi_api_key()
                 self.client = KimiK2Client(api_key=api_key)
                 self.api_name = "kimi_k2"
@@ -147,11 +151,11 @@ class ResumeGenerator:
                     print(f"Retry attempt {attempt + 1}/{max_retries} after {retry_delay:.1f}s delay...")
                     time.sleep(retry_delay)
                 else:
-                    model_name = "Claude Opus 4.1" if self.model == "claude-opus-4" else "Kimi K2"
+                    model_name = "Claude Sonnet 4.5" if self.model in ["claude-sonnet-4.5", "claude-opus-4"] else "Kimi K2"
                     print(f"Generating ATS-optimized resume with {model_name}...")
 
                 # Use configuration for API settings based on selected model
-                if self.model == "claude-opus-4":
+                if self.model in ["claude-sonnet-4.5", "claude-opus-4"]:
                     result = self.client.chat_completion(
                         messages=[
                             {"role": "user", "content": prompt}
@@ -182,9 +186,9 @@ class ResumeGenerator:
                 tokens_used = result['usage']['total_tokens']
 
                 # Estimate cost based on model
-                # Kimi pricing: ~$0.002/1K tokens, Claude Opus 4: ~$0.015/1K input + $0.075/1K output (average ~$0.045/1K)
-                if self.model == "claude-opus-4":
-                    cost_estimate = (tokens_used / 1000) * 0.045
+                # Kimi pricing: ~$0.002/1K tokens, Claude Sonnet 4.5: ~$0.003/1K input + $0.015/1K output (average ~$0.009/1K)
+                if self.model in ["claude-sonnet-4.5", "claude-opus-4"]:
+                    cost_estimate = (tokens_used / 1000) * 0.009
                 else:
                     cost_estimate = (tokens_used / 1000) * 0.002
 
@@ -367,14 +371,32 @@ class ResumeGenerator:
 
         prompt = f"""You are an expert ATS (Applicant Tracking System) resume writer with deep knowledge of how ATS systems parse, rank, and score resumes.
 
+# CRITICAL INSTRUCTION - READ CAREFULLY
+You MUST use ONLY the information from the candidate's profile below. Do NOT invent skills, experiences, projects, or qualifications that are not explicitly mentioned in their profile. Do NOT hallucinate or fabricate content. Your role is to REFORMAT and OPTIMIZE what exists, not to create new content.
+
+# Candidate Profile (USE THIS DATA ONLY)
+{profile_text}
+
 # Your Task
 Create a highly ATS-optimized resume for {company_name} - {job_title} position that will score 90+ in ATS systems while remaining compelling to human recruiters.
 
-# ATS Optimization Knowledge Base
-{self.ats_knowledge[:20000]}
+IMPORTANT: Use ONLY the candidate's actual:
+- Skills mentioned in their profile
+- Projects they actually worked on
+- Experience they actually have
+- Education they actually completed
+- Publications they actually authored
 
-# Candidate Profile
-{profile_text}
+Do NOT add:
+- Skills they don't have (e.g., if they don't mention "Neural Rendering" or "3D Reconstruction", DO NOT add these)
+- Projects they didn't work on
+- Technologies they didn't use
+- Experience they don't have
+
+# ATS Optimization Knowledge Base (Synthesized from 7+ Industry Sources)
+This knowledge base contains proven strategies from industry-leading sources including Jobscan, ATS platform documentation, and 2025 best practices. Use this to guide resume optimization while keeping the candidate's actual information.
+
+{self.ats_knowledge[:30000]}
 
 # Target Job Analysis
 Company: {company_name}
@@ -389,23 +411,31 @@ Full Job Analysis:
 
 # Resume Generation Instructions
 
-## Critical ATS Requirements:
-1. **File Format**: Generate plain text/markdown that can easily be converted to PDF
-2. **Formatting**:
-   - Use simple, clean formatting
-   - NO tables, text boxes, columns, or graphics
-   - Use standard section headers: "PROFESSIONAL SUMMARY", "EXPERIENCE", "EDUCATION", "SKILLS", "CERTIFICATIONS", "PUBLICATIONS"
-   - Use simple bullet points (-)
-   - Standard fonts only in final PDF (Arial, Calibri, or similar)
+## Critical ATS Requirements (Based on Analysis of 10+ Million Job Descriptions):
 
-3. **Keyword Optimization** (Target 2-4% density for core technical skills):
-   - Naturally integrate ALL keywords from the job description
-   - **Repeat core technical skills 3-6 times throughout resume** (Professional Summary, Skills, Experience bullets)
-   - Include exact phrases from the job posting where relevant
-   - Place critical keywords in: Professional Summary, Skills section, and Experience descriptions
-   - Mirror the job description language and terminology
-   - Include both acronyms and full terms (e.g., "AI/ML" and "Artificial Intelligence/Machine Learning")
-   - **Avoid company-specific business jargon** unless directly relevant to technical role (skip keywords like "apparel design" for engineering roles)
+1. **Natural, Human-Readable Writing**:
+   - Write in natural language that sounds authentic and personal to the candidate
+   - Avoid robotic, keyword-stuffed language
+   - Use the candidate's actual voice and experience
+   - Balance ATS optimization with compelling storytelling
+   - Make it easy for humans to read and understand (6-second recruiter scan test)
+
+2. **File Format & Formatting**:
+   - Generate clean markdown that converts to ATS-friendly PDF
+   - NO tables, text boxes, columns, graphics, or images
+   - Use standard section headers: "Summary", "Technical Skills", "Education", "Projects", "Publications"
+   - Use simple bullet points (-)
+   - Standard fonts only (Arial, Calibri, Charter)
+
+3. **Smart Keyword Integration** (65-75% match rate is optimal - higher triggers keyword stuffing filters):
+   - **CRITICAL RULE**: Only include keywords for skills/technologies the candidate ACTUALLY HAS
+   - Use keywords that match the candidate's real experience naturally in context
+   - Repeat core skills the candidate possesses 2-3 times naturally (Summary + Skills + Project descriptions)
+   - Include exact terminology from job description ONLY if candidate has that skill
+   - Mirror job description language for skills candidate genuinely possesses
+   - Include acronyms + full terms where candidate used them (e.g., "AI/ML", "RAG Systems")
+   - **DO NOT add skills the candidate doesn't have** - 76.4% of recruiters filter by skills, false claims are easily detected
+   - Focus on the candidate's strongest, most relevant actual skills rather than keyword stuffing
 
 4. **Content Strategy**:
    - Lead with a strong Professional Summary (3-4 lines) that mirrors the job requirements
@@ -481,18 +511,42 @@ Provide the resume in clean, well-structured markdown format that follows this s
 - [Brief description or key points about the publication]
 - [Impact, citations, or relevance to the role]
 
+## [ANY OTHER SECTIONS FROM CANDIDATE'S PROFILE]
+**CRITICAL**: If the candidate's profile contains additional sections (Awards, Certifications, Additional Technical Contributions, Professional Memberships, Languages, etc.), you MUST INCLUDE THEM using the same markdown format:
+
+### Section Name
+- Bullet point format for lists
+- Or paragraph format for text
+- Maintain the structure from the original profile
+
+**Examples of additional sections to preserve**:
+- Awards & Honors
+- Certifications
+- Professional Memberships
+- Additional Technical Contributions
+- Volunteer Experience
+- Languages
+- Patents
+- Conference Presentations
+- Media Mentions
+- Teaching Experience
+
 ---
 
 **IMPORTANT**:
+- **CRITICAL: DO NOT HALLUCINATE OR FABRICATE** - Use ONLY information from the candidate's actual profile above
+- **CRITICAL: DO NOT INVENT SKILLS** - If the candidate doesn't mention a skill (like "Neural Rendering", "3D Reconstruction", "NeRF"), DO NOT add it
+- **CRITICAL: DO NOT REWRITE PROJECT CONTENT** - Keep the candidate's actual project descriptions, just optimize the wording for ATS
+- **CRITICAL: PRESERVE ALL SECTIONS** - If the candidate has Publications, Awards, Certifications, Additional Technical Contributions, or any other sections in their profile, INCLUDE THEM ALL in your output
+- **CRITICAL: MAINTAIN SECTION ORDER** - Keep sections in a logical order: Summary → Skills → Education → Projects/Experience → Publications → Awards → Additional Technical Contributions → Other sections
 - **ALWAYS include the EDUCATION section** - this is mandatory for all resumes
-- **ALWAYS include the PUBLICATIONS section** if the candidate has any research papers or publications
-- Ensure EVERY required skill from the job description appears somewhere in the resume
-- Use exact terminology from the job posting
-- Prioritize content that matches the job description
-- Make the resume achievement-oriented with quantifiable results
+- Ensure required skills from job description that the CANDIDATE ACTUALLY HAS appear in the resume
+- Use exact terminology from the job posting ONLY for skills the candidate actually possesses
+- Prioritize content that matches the job description from the candidate's REAL experience
+- Make the resume achievement-oriented with quantifiable results from their ACTUAL work
 - Optimize for both ATS parsing AND human readability
 - Keep to 1-2 pages maximum
-- Be truthful - enhance and optimize the candidate's real experience, don't fabricate
+- ENHANCE and OPTIMIZE the candidate's REAL experience - DO NOT fabricate new skills or projects
 
 **OUTPUT REQUIREMENTS**:
 - Generate ONLY the resume content in the format specified above

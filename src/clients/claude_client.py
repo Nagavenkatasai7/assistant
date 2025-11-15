@@ -1,6 +1,6 @@
 """
-Claude Opus 4.1 Client
-Anthropic's most powerful reasoning model for fast, high-quality resume generation
+Claude Sonnet 4.5 Client
+Anthropic's balanced model for fast, high-quality resume generation
 """
 import os
 import time
@@ -10,18 +10,18 @@ from typing import Dict, Any, Optional
 
 class ClaudeOpusClient:
     """
-    Client for Claude Opus 4.1 API
+    Client for Claude Sonnet 4.5 API
 
     Features:
     - 200K token context window
-    - Advanced reasoning capabilities
+    - Balanced reasoning and speed
     - Fast generation speed
     - Extended thinking mode for complex tasks
     """
 
     def __init__(self, api_key: Optional[str] = None):
         """
-        Initialize Claude Opus client
+        Initialize Claude Sonnet client
 
         Args:
             api_key: Anthropic API key (or set ANTHROPIC_API_KEY env var)
@@ -33,8 +33,8 @@ class ClaudeOpusClient:
         # Initialize Anthropic client
         self.client = Anthropic(api_key=self.api_key)
 
-        # Model configuration - Claude Opus 4.1
-        self.model = "claude-opus-4-20250514"  # Claude Opus 4.1 model
+        # Model configuration - Claude Sonnet 4.5
+        self.model = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5 model
         self.default_temperature = 0.7
         self.default_max_tokens = 8192
 
@@ -46,7 +46,7 @@ class ClaudeOpusClient:
         timeout: float = 120.0
     ) -> Dict[str, Any]:
         """
-        Create a chat completion using Claude Opus 4.1
+        Create a chat completion using Claude Sonnet 4.5
 
         Args:
             messages: List of message dictionaries with 'role' and 'content'

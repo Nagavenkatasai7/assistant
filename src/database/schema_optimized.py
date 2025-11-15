@@ -513,6 +513,69 @@ class OptimizedDatabase:
             return []
 
     @monitor_query_performance()
+    def update_resume_content(self, resume_id: int, content: str) -> bool:
+        """
+        Update the resume markdown content in the database
+
+        Args:
+            resume_id: The ID of the resume to update
+            content: The new markdown content for the resume
+
+        Returns:
+            True on success, False on failure
+        """
+        # Invalidate cache on write
+        if self.cache:
+            self.cache.invalidate('resume')
+
+        # Retry logic with exponential backoff for database lock issues
+        max_retries = 5
+        retry_delay = 0.1  # Start with 100ms
+
+        for attempt in range(max_retries):
+            try:
+                with self.pool.get_connection() as conn:
+                    cursor = conn.cursor()
+
+                    # Use BEGIN IMMEDIATE for write transactions to acquire lock immediately
+                    cursor.execute("BEGIN IMMEDIATE")
+                    cursor.execute("""
+                        UPDATE generated_resumes
+                        SET resume_content = ?
+                        WHERE id = ?
+                    """, (content, resume_id))
+
+                    rows_affected = cursor.rowcount
+                    conn.commit()
+
+                    # Log the update operation
+                    if rows_affected > 0:
+                        print(f"Successfully updated resume ID {resume_id} with {len(content)} characters")
+                        return True
+                    else:
+                        print(f"Warning: No resume found with ID {resume_id}")
+                        return False
+
+            except sqlite3.OperationalError as e:
+                # Retry logic for transient database errors
+                if _is_retryable_db_error(e) and attempt < max_retries - 1:
+                    print(f"Retryable database error ({str(e)[:50]}), retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Double the delay for next attempt
+                    continue
+                else:
+                    # Max retries exceeded or non-retryable error
+                    print(f"Error updating resume content: {e}")
+                    return False
+            except Exception as e:
+                # Catch any other exceptions
+                print(f"Error updating resume content: {e}")
+                return False
+
+        # If we exhausted all retries
+        return False
+
+    @monitor_query_performance()
     def get_resumes_paginated(
         self,
         page: int = 1,

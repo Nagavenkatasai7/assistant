@@ -45,13 +45,21 @@ env/
 *.sqlite
 *.sqlite3
 resume_generator.db
+*.db-shm
+*.db-wal
+*.db-journal
 
 # Generated files
 generated_resumes/*.pdf
+generated_resumes/*.tex
+generated_resumes/*.docx
+generated_coverletters/
 knowledge_extracted/*.txt
 profile_data.json
 ats_knowledge_summary.json
 test_resume.pdf
+test_output/
+test_resume.txt
 
 # OS
 .DS_Store

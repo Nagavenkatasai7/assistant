@@ -1,0 +1,243 @@
+\documentclass[10pt, letterpaper]{article}
+
+% Packages
+\usepackage[ignoreheadfoot, top=1.5cm, bottom=1.5cm, left=1.8cm, right=1.8cm, footskip=0.5cm]{geometry}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{primaryColor}{RGB}{0, 79, 123}
+\definecolor{linkColor}{RGB}{0, 79, 123}
+\usepackage{enumitem}
+\usepackage{fontawesome5}
+\usepackage{amsmath}
+\usepackage[pdftitle={<VAR>header.name</VAR> - <VAR>header.title|default('AI Product Developer')</VAR>}, pdfauthor={<VAR>header.name</VAR>}, colorlinks=true, urlcolor=linkColor]{hyperref}
+\usepackage{paracol}
+\usepackage{ifthen}
+\usepackage{needspace}
+\usepackage{iftex}
+\usepackage{changepage}
+
+\ifPDFTeX
+    \input{glyphtounicode}
+    \pdfgentounicode=1
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+    \usepackage{lmodern}
+\fi
+
+\usepackage{charter}
+
+\raggedright
+\pagestyle{empty}
+\setcounter{secnumdepth}{0}
+\setlength{\parindent}{0pt}
+\setlength{\topskip}{0pt}
+
+% Adjusted spacing for one-page fit
+\titleformat{\section}{\needspace{4\baselineskip}\bfseries\large}{}{0pt}{}[\vspace{1pt}\titlerule]
+\titlespacing{\section}{-1pt}{0.2cm}{0.15cm}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\small$\bullet$}}$}
+
+\newenvironment{highlights}{
+    \begin{itemize}[topsep=0.05cm, parsep=0.05cm, partopsep=0pt, itemsep=0pt, leftmargin=10pt]
+}{
+    \end{itemize}
+}
+
+\newenvironment{onecolentry}{
+    \begin{adjustwidth}{0cm}{0cm}
+}{
+    \end{adjustwidth}
+}
+
+\newenvironment{twocolentry}[2][]{
+    \onecolentry
+    \def\secondColumn{#2}
+    \setcolumnwidth{\fill, 4.5cm}
+    \begin{paracol}{2}
+}{
+    \switchcolumn \raggedleft \secondColumn
+    \end{paracol}
+    \endonecolentry
+}
+
+\newenvironment{header}{
+    \setlength{\topsep}{0pt}\par\kern\topsep\centering\linespread{1.5}
+}{
+    \par\kern\topsep
+}
+
+\begin{document}
+    \newcommand{\AND}{\unskip
+        \cleaders\copy\ANDbox\hskip\wd\ANDbox
+        \ignorespaces
+    }
+    \newsavebox\ANDbox
+    \sbox\ANDbox{$|$}
+
+    % HEADER
+    \begin{header}
+        \fontsize{24pt}{24pt}\selectfont \textbf{<VAR>header.name</VAR>}
+
+        \vspace{4pt}
+
+        \normalsize
+        \mbox{<VAR>header.location</VAR>}%
+        \kern 5.0pt%
+        \AND%
+        \kern 5.0pt%
+        \mbox{\href{mailto:<VAR>header.email</VAR>}{<VAR>header.email</VAR>}}%
+        <BLOCK>if header.linkedin</BLOCK>%
+        \kern 5.0pt%
+        \AND%
+        \kern 5.0pt%
+        \mbox{\href{https://<VAR>header.linkedin</VAR>}{LinkedIn}}%
+        <BLOCK>endif</BLOCK>
+        <BLOCK>if header.github</BLOCK>%
+        \kern 5.0pt%
+        \AND%
+        \kern 5.0pt%
+        \mbox{\href{https://<VAR>header.github</VAR>}{GitHub}}%
+        <BLOCK>endif</BLOCK>
+        <BLOCK>if header.portfolio</BLOCK>%
+        \kern 5.0pt%
+        \AND%
+        \kern 5.0pt%
+        \mbox{\href{https://<VAR>header.portfolio</VAR>}{Portfolio}}%
+        <BLOCK>endif</BLOCK>
+    \end{header}
+
+    % PROFESSIONAL SUMMARY
+    \section{Summary}
+    \begin{onecolentry}
+        <VAR>summary</VAR>
+    \end{onecolentry}
+
+    % TECHNICAL SKILLS
+    \section{Technical Skills}
+    <BLOCK>if skills.ai_ml</BLOCK>
+    \begin{onecolentry}
+        \textbf{AI/ML \& LLMs:} <VAR>skills.ai_ml|join(', ')</VAR>
+    \end{onecolentry}
+    <BLOCK>endif</BLOCK>
+    <BLOCK>if skills.product_dev</BLOCK>
+    \vspace{-2pt}
+    \begin{onecolentry}
+        \textbf{Product Development:} <VAR>skills.product_dev|join(', ')</VAR>
+    \end{onecolentry}
+    <BLOCK>endif</BLOCK>
+    <BLOCK>if skills.programming</BLOCK>
+    \vspace{-2pt}
+    \begin{onecolentry}
+        \textbf{Programming \& Tools:} <VAR>skills.programming|join(', ')</VAR>
+    \end{onecolentry}
+    <BLOCK>endif</BLOCK>
+
+    % EDUCATION
+    \section{Education}
+    <BLOCK>for edu in education</BLOCK>
+    \begin{twocolentry}{<VAR>edu.dates</VAR>}
+        \textbf{<VAR>edu.institution</VAR>} | <VAR>edu.degree</VAR><BLOCK>if edu.gpa</BLOCK> | GPA: <VAR>edu.gpa</VAR><BLOCK>endif</BLOCK>
+    \end{twocolentry}
+    <BLOCK>if edu.research_role</BLOCK>
+    \vspace{-2pt}
+    \begin{onecolentry}
+        \textit{<VAR>edu.research_role</VAR>}
+    \end{onecolentry}
+    <BLOCK>endif</BLOCK>
+    <BLOCK>if not loop.last</BLOCK>
+    \vspace{2pt}
+    <BLOCK>endif</BLOCK>
+    <BLOCK>endfor</BLOCK>
+
+    % PROJECTS
+    \section{<VAR>projects_section_title|default('Projects')</VAR>}
+
+    <BLOCK>for project in projects</BLOCK>
+    % Project <VAR>loop.index</VAR>
+    \begin{twocolentry}{<VAR>project.dates</VAR>}
+        \textbf{<VAR>project.title</VAR>}<BLOCK>if project.github</BLOCK> | \href{<VAR>project.github</VAR>}{GitHub}<BLOCK>endif</BLOCK><BLOCK>if project.technologies</BLOCK> | <VAR>project.technologies</VAR><BLOCK>endif</BLOCK>
+    \end{twocolentry}
+    \begin{onecolentry}
+        \begin{highlights}
+            <BLOCK>for bullet in project.bullets</BLOCK>
+            \item <VAR>bullet</VAR>
+            <BLOCK>endfor</BLOCK>
+        \end{highlights}
+    \end{onecolentry}
+
+    <BLOCK>endfor</BLOCK>
+
+    <# DYNAMIC SECTIONS (Publications, Awards, Certifications, Additional Contributions, etc.) #>
+    <BLOCK>if dynamic_sections and dynamic_sections|length > 0</BLOCK>
+    <BLOCK>for section_name, section_data in dynamic_sections.items()</BLOCK>
+
+    \section{<VAR>section_data.display_name</VAR>}
+
+    <# Render based on content type #>
+    <BLOCK>if section_data.type == 'text'</BLOCK>
+    <# Simple text content #>
+    \begin{onecolentry}
+        <VAR>section_data.content</VAR>
+    \end{onecolentry}
+
+    <BLOCK>elif section_data.type == 'list'</BLOCK>
+    <# Bullet list #>
+    \begin{onecolentry}
+        \begin{highlights}
+            <BLOCK>for item in section_data.content</BLOCK>
+            \item <VAR>item</VAR>
+            <BLOCK>endfor</BLOCK>
+        \end{highlights}
+    \end{onecolentry}
+
+    <BLOCK>elif section_data.type == 'structured'</BLOCK>
+    <# Structured items (Publications, Awards with metadata) #>
+    <BLOCK>for item in section_data.content</BLOCK>
+    \begin{onecolentry}
+        <BLOCK>if item.title</BLOCK>\textbf{<VAR>item.title</VAR>}<BLOCK>endif</BLOCK><BLOCK>if item.url</BLOCK> | \href{<VAR>item.url</VAR>}{Link}<BLOCK>endif</BLOCK>
+
+        <BLOCK>if item.authors</BLOCK>
+        \textit{<VAR>item.authors</VAR>}
+        <BLOCK>endif</BLOCK>
+
+        <BLOCK>if item.venue</BLOCK>
+        <VAR>item.venue</VAR><BLOCK>if item.year</BLOCK>, <VAR>item.year</VAR><BLOCK>endif</BLOCK>
+        <BLOCK>endif</BLOCK>
+
+        <BLOCK>if item.text and not item.title</BLOCK>
+        <# Fallback for items without title (just text) #>
+        <VAR>item.text</VAR>
+        <BLOCK>endif</BLOCK>
+
+        <BLOCK>if item.description</BLOCK>
+
+        \textit{<VAR>item.description</VAR>}
+        <BLOCK>endif</BLOCK>
+    \end{onecolentry}
+    <BLOCK>if not loop.last</BLOCK>
+    \vspace{2pt}
+    <BLOCK>endif</BLOCK>
+    <BLOCK>endfor</BLOCK>
+
+    <BLOCK>elif section_data.type == 'nested'</BLOCK>
+    <# Nested subsections #>
+    <BLOCK>for subsection_name, subsection_data in section_data.content.items()</BLOCK>
+    \begin{onecolentry}
+        \textbf{<VAR>subsection_data.name</VAR>}
+
+        <VAR>subsection_data.content</VAR>
+    \end{onecolentry}
+    <BLOCK>if not loop.last</BLOCK>
+    \vspace{2pt}
+    <BLOCK>endif</BLOCK>
+    <BLOCK>endfor</BLOCK>
+
+    <BLOCK>endif</BLOCK>
+
+    <BLOCK>endfor</BLOCK>
+    <BLOCK>endif</BLOCK>
+
+\end{document}

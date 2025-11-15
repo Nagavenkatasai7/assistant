@@ -13,21 +13,42 @@ from src.security.secrets_manager import SecretsManager
 from src.security.security_logger import get_security_logger, SecurityEventType
 from config import APIConfig, SecurityConfig
 
-# Import Kimi client
+# Import AI clients
 from src.clients.kimi_client import KimiK2Client
+from src.clients.claude_client import ClaudeOpusClient
 
 load_dotenv()
 
 class JobAnalyzer:
-    def __init__(self):
+    def __init__(self, model="claude-sonnet-4.5"):
         # Initialize security components
         self.secrets_manager = SecretsManager()
         self.security_logger = get_security_logger()
         self.prompt_sanitizer = PromptSanitizer()
 
-        # Get API key securely
-        api_key = self.secrets_manager.get_kimi_api_key()
-        self.client = KimiK2Client(api_key=api_key)
+        # Store model selection
+        self.model = model
+
+        # Initialize appropriate client based on model selection
+        print(f"[DEBUG] JobAnalyzer initializing with model: {model}")
+        if model == "claude-sonnet-4.5" or model == "claude-opus-4":
+            # Use Claude Sonnet 4.5
+            api_key = self.secrets_manager.get_anthropic_api_key()
+            if not api_key:
+                print("❌ JobAnalyzer: Anthropic API key not found, falling back to Kimi K2")
+                api_key = self.secrets_manager.get_kimi_api_key()
+                self.client = KimiK2Client(api_key=api_key)
+                self.api_name = "kimi_k2"
+            else:
+                print(f"✅ JobAnalyzer: Using Claude Sonnet 4.5")
+                self.client = ClaudeOpusClient(api_key=api_key)
+                self.api_name = "claude_sonnet_4_5"
+        else:
+            # Use Kimi K2
+            print(f"[DEBUG] JobAnalyzer: Using Kimi K2")
+            api_key = self.secrets_manager.get_kimi_api_key()
+            self.client = KimiK2Client(api_key=api_key)
+            self.api_name = "kimi_k2"
 
     def analyze_job_description(self, job_description, company_name=None, user_identifier=None):
         """
