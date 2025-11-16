@@ -36,7 +36,7 @@ from src.generators import ResumeGenerator
 from src.generators.coverletter_generator import CoverLetterGenerator
 from src.generators.coverletter_pdf_generator import CoverLetterPDFGenerator
 from src.generators.docx_generator import DOCXGenerator
-from src.generators.latex_resume_pipeline import LaTeXResumePipeline  # LaTeX integration
+from src.generators.markdown_pdf_generator import ResumeMarkdownPDFGenerator  # Direct markdown-to-PDF (clean, ATS-friendly)
 
 # Security modules
 from src.security.input_validator import InputValidator
@@ -268,12 +268,12 @@ def initialize_components(db, model="claude-sonnet-4.5"):
     job_analyzer = JobAnalyzer(model=model)  # Pass model to JobAnalyzer
     tavily_client = TavilyClient()
     resume_generator = ResumeGenerator(model=model)
-    latex_pipeline = LaTeXResumePipeline()  # LaTeX pipeline for professional resumes
+    markdown_pdf_generator = ResumeMarkdownPDFGenerator()  # Direct markdown-to-PDF (clean, simple)
     coverletter_generator = CoverLetterGenerator()
     coverletter_pdf_generator = CoverLetterPDFGenerator()
     docx_generator = DOCXGenerator()
 
-    return profile_parser, job_analyzer, tavily_client, resume_generator, latex_pipeline, coverletter_generator, coverletter_pdf_generator, docx_generator
+    return profile_parser, job_analyzer, tavily_client, resume_generator, markdown_pdf_generator, coverletter_generator, coverletter_pdf_generator, docx_generator
 
 def main():
     # Generate or retrieve session ID for rate limiting
@@ -614,8 +614,8 @@ def main():
                 # DEBUG: Show which model is being used
                 st.info(f"🔍 DEBUG: Using model = '{active_model}'")
 
-                # Initialize components with selected model (LaTeX only)
-                profile_parser, job_analyzer, tavily_client, resume_generator, latex_pipeline, coverletter_generator, coverletter_pdf_generator, docx_generator = initialize_components(db, model=active_model)
+                # Initialize components with selected model
+                profile_parser, job_analyzer, tavily_client, resume_generator, markdown_pdf_generator, coverletter_generator, coverletter_pdf_generator, docx_generator = initialize_components(db, model=active_model)
 
                 # Show progress
                 with st.spinner("Generating your ATS-optimized resume..."):
@@ -691,108 +691,32 @@ def main():
 
                         progress_bar.progress(90)
 
-                        # Step 6: Generate PDF using LaTeX
-                        st.info("📝 Creating professional LaTeX PDF...")
+                        # Step 6: Generate PDF directly from markdown using HTML
+                        st.info("📝 Creating professional PDF from markdown...")
                         output_dir = Path("generated_resumes")
                         output_dir.mkdir(exist_ok=True)
 
-                        # Create filename: Venkat_CompanyName
+                        # Create filename with timestamp to prevent caching: Venkat_CompanyName_YYYYMMDD_HHMMSS
+                        from datetime import datetime
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                         safe_company_name = "".join(c for c in company_name if c.isalnum() or c in (' ', '-', '_')).strip()
-                        base_filename = f"Venkat_{safe_company_name}"
+                        base_filename = f"Venkat_{safe_company_name}_{timestamp}"
 
-                        # Parse AI-generated resume into structured data
-                        from src.parsers.ai_resume_parser import AIResumeParser
-                        ai_parser = AIResumeParser()
-                        structured_resume = ai_parser.parse_markdown_resume(resume_result['content'])
-
-                        # Parse profile for contact information only
-                        import re
-                        profile_data = profile_parser.parse_profile()
-
-                        # Extract links from profile
-                        links = []
-                        if profile_data.get('personal_info', {}).get('linkedin'):
-                            links.append('https://' + profile_data['personal_info']['linkedin'])
-                        if profile_data.get('personal_info', {}).get('github'):
-                            links.append('https://' + profile_data['personal_info']['github'])
-
-                        # Build structured resume data for LaTeX
-                        # Merge AI-generated structured data with profile contact info
-
-                        # Use AI-parsed header but override with profile contact info if available
-                        header_data = structured_resume.get('header', {})
-                        if profile_data and profile_data.get('personal_info'):
-                            profile_info = profile_data['personal_info']
-                            if profile_info.get('email'):
-                                header_data['email'] = profile_info['email']
-                            if profile_info.get('linkedin'):
-                                header_data['linkedin'] = profile_info['linkedin']
-                            if profile_info.get('github'):
-                                header_data['github'] = profile_info['github']
-                            # Use name from profile if available
-                            if profile_info.get('name'):
-                                header_data['name'] = profile_info['name']
-
-                        # Add job title from job analysis
-                        header_data['title'] = job_analysis.get('job_title', 'Software Engineer')
-
-                        # Use AI-generated content for all sections
-                        resume_data = {
-                            'header': header_data,
-                            'summary': structured_resume.get('summary', 'Experienced professional with expertise in software development and modern technologies.'),
-                            'skills': structured_resume.get('skills', {
-                                'ai_ml': ['Machine Learning', 'Deep Learning', 'LLMs', 'RAG Systems'],
-                                'product_dev': ['Agile/Scrum', 'Product Strategy', 'User Research'],
-                                'programming': ['Python', 'JavaScript', 'SQL', 'Git', 'Docker', 'AWS']
-                            }),
-                            'education': structured_resume.get('education', [{
-                                'institution': 'University',
-                                'degree': 'Bachelor of Science in Computer Science',
-                                'gpa': '3.8/4.0',
-                                'dates': '2020 – 2024'
-                            }]),
-                            'projects': structured_resume.get('projects', []),
-                            'additional': structured_resume.get('additional', {}),
-                            'dynamic_sections': structured_resume.get('dynamic_sections', {})
-                        }
-
-                        # Log dynamic sections for debugging
-                        if resume_data.get('dynamic_sections'):
-                            section_names = list(resume_data['dynamic_sections'].keys())
-                            print(f"📋 Dynamic sections detected for PDF: {section_names}")
-                        else:
-                            print("⚠️  No dynamic sections detected in parsed markdown")
-
-                        # Ensure we have at least some projects
-                        if not resume_data['projects']:
-                            resume_data['projects'] = [
-                                {
-                                    'title': 'Technical Project',
-                                    'dates': '2024 – Present',
-                                    'technologies': 'Python, Modern Stack',
-                                    'bullets': [
-                                        'Developed innovative solutions',
-                                        'Implemented best practices',
-                                        'Delivered high-quality results'
-                                    ]
-                                }
-                            ]
-
-                        # Generate LaTeX resume
-                        tex_path, pdf_path, error = latex_pipeline.generate_resume(
-                            resume_data=resume_data,
-                            output_path=str(output_dir / base_filename),
-                            compile_pdf=True
+                        # Generate PDF directly from markdown text
+                        # Clean, ATS-friendly formatting that matches the preview exactly!
+                        pdf_path, error = markdown_pdf_generator.generate_pdf(
+                            markdown_content=resume_result['content'],
+                            output_path=str(output_dir / base_filename)
                         )
 
                         if error:
-                            st.error(f"❌ LaTeX PDF generation failed: {error}")
-                            st.info("Falling back to plain text resume...")
+                            st.error(f"❌ PDF generation failed: {error}")
+                            st.info("Saving as text file as fallback...")
                             # Save markdown as fallback
                             pdf_path = str(output_dir / f"{base_filename}.txt")
                             Path(pdf_path).write_text(resume_result['content'], encoding='utf-8')
                         else:
-                            st.success(f"✓ Professional LaTeX PDF generated!")
+                            st.success(f"✓ Professional PDF generated from markdown!")
 
                         progress_bar.progress(95)
 

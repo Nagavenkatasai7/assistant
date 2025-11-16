@@ -418,15 +418,20 @@ class AIResumeParser:
                     current_edu = {}
 
                     # Extract institution and degree
+                    # Format: "Degree | Institution (Context) | Location"
                     clean_line = re.sub(r'\*\*|###\s*', '', line).strip()
-                    parts = re.split(r'[|,]', clean_line)
+                    parts = re.split(r'\|', clean_line)
 
-                    if parts:
+                    if len(parts) >= 2:
+                        # parts[0] = Degree
+                        # parts[1] = Institution (possibly with context in parentheses)
+                        # parts[2] = Location (optional)
+                        current_edu['degree'] = parts[0].strip()
+                        current_edu['institution'] = parts[1].strip()  # Keep the context in parentheses!
+                    elif parts:
+                        # Fallback: if only one part, assume it's the institution
                         current_edu['institution'] = parts[0].strip()
-                        if len(parts) > 1:
-                            current_edu['degree'] = parts[1].strip()
-                        else:
-                            current_edu['degree'] = 'Bachelor of Science'
+                        current_edu['degree'] = 'Bachelor of Science'
 
                 # Look for dates
                 date_match = re.search(r'(\d{4})\s*[-–]\s*(\d{4}|Present)', line)
@@ -492,7 +497,11 @@ class AIResumeParser:
 
         for i, line in enumerate(lines):
             # Check for project section
-            if re.match(r'^#{1,2}\s*(Technical\s*)?Projects|^#{1,2}\s*Experience|^#{1,2}\s*Work', line, re.IGNORECASE):
+            # Match "Projects", "Professional Experience", "Work Experience" but NOT "Research Experience"
+            if re.match(r'^#{1,2}\s*(Technical\s*)?Projects', line, re.IGNORECASE):
+                in_projects = True
+                continue
+            elif re.match(r'^#{1,2}\s*(Professional\s+Experience|Work\s+Experience)$', line, re.IGNORECASE):
                 in_projects = True
                 continue
             elif in_projects and re.match(r'^#{1,2}\s+\w', line) and 'project' not in line.lower():

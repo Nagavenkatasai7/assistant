@@ -152,6 +152,48 @@
     <BLOCK>endif</BLOCK>
     <BLOCK>endfor</BLOCK>
 
+    <# DYNAMIC SECTIONS THAT COME BEFORE PROJECTS (Research Experience, etc.) #>
+    <BLOCK>if dynamic_sections and dynamic_sections|length > 0</BLOCK>
+    <BLOCK>for section_name, section_data in dynamic_sections.items()</BLOCK>
+    <BLOCK>if 'experience' in section_name.lower() or 'research' in section_name.lower()</BLOCK>
+
+    \section{<VAR>section_data.display_name</VAR>}
+
+    <# Render based on content type #>
+    <BLOCK>if section_data.type == 'nested'</BLOCK>
+    <# Nested subsections - for experience entries #>
+    <BLOCK>for subsection_name, subsection_data in section_data.content.items()</BLOCK>
+    \begin{onecolentry}
+        \textbf{<VAR>subsection_data.name</VAR>}
+
+        <VAR>subsection_data.content</VAR>
+    \end{onecolentry}
+    <BLOCK>if not loop.last</BLOCK>
+    \vspace{2pt}
+    <BLOCK>endif</BLOCK>
+    <BLOCK>endfor</BLOCK>
+
+    <BLOCK>elif section_data.type == 'text'</BLOCK>
+    <# Simple text content #>
+    \begin{onecolentry}
+        <VAR>section_data.content</VAR>
+    \end{onecolentry}
+
+    <BLOCK>elif section_data.type == 'list'</BLOCK>
+    <# Bullet list #>
+    \begin{onecolentry}
+        \begin{highlights}
+            <BLOCK>for item in section_data.content</BLOCK>
+            \item <VAR>item</VAR>
+            <BLOCK>endfor</BLOCK>
+        \end{highlights}
+    \end{onecolentry}
+    <BLOCK>endif</BLOCK>
+
+    <BLOCK>endif</BLOCK>
+    <BLOCK>endfor</BLOCK>
+    <BLOCK>endif</BLOCK>
+
     % PROJECTS
     \section{<VAR>projects_section_title|default('Projects')</VAR>}
 
@@ -171,8 +213,10 @@
     <BLOCK>endfor</BLOCK>
 
     <# DYNAMIC SECTIONS (Publications, Awards, Certifications, Additional Contributions, etc.) #>
+    <# Skip experience/research sections that were already rendered before Projects #>
     <BLOCK>if dynamic_sections and dynamic_sections|length > 0</BLOCK>
     <BLOCK>for section_name, section_data in dynamic_sections.items()</BLOCK>
+    <BLOCK>if 'experience' not in section_name.lower() and 'research' not in section_name.lower()</BLOCK>
 
     \section{<VAR>section_data.display_name</VAR>}
 
@@ -237,6 +281,7 @@
 
     <BLOCK>endif</BLOCK>
 
+    <BLOCK>endif</BLOCK>
     <BLOCK>endfor</BLOCK>
     <BLOCK>endif</BLOCK>
 
