@@ -34,6 +34,9 @@ except ImportError:
 # Import voice analyzer for personalization
 from src.utils.voice_analyzer import VoiceAnalyzer
 
+# Import resume validator for quality enforcement
+from src.utils.resume_validator import ResumeValidator
+
 load_dotenv()
 
 class ResumeGenerator:
@@ -92,6 +95,9 @@ class ResumeGenerator:
 
         # Initialize voice analyzer for personalization
         self.voice_analyzer = VoiceAnalyzer()
+
+        # Initialize resume validator for quality enforcement
+        self.resume_validator = ResumeValidator(min_star_percentage=60.0)
 
     def _load_ats_knowledge(self, knowledge_path):
         """Load ATS knowledge base"""
@@ -444,13 +450,30 @@ You MUST use the company research above to demonstrate genuine interest in {comp
    - If company is expanding globally: highlight cross-cultural/international experience
    - If company recently launched product: emphasize fast-paced/startup experience
 
-**INTEGRATION CHECKLIST:**
-- [ ] Company name mentioned in Professional Summary
-- [ ] Company mission/values referenced in summary or bullets
-- [ ] At least 1-2 experience bullets reference company products or tech stack
-- [ ] Technical skills section prioritizes technologies matching company's stack
-- [ ] Language and tone match company culture (formal/casual based on research)
-- [ ] Show understanding of company's market position or challenges
+**🚨 MANDATORY COMPANY ALIGNMENT CHECKLIST - VERIFY BEFORE GENERATING:**
+
+You MUST include ALL of the following in the resume:
+
+- [ ] Company name "{company_name}" mentioned BY NAME in Professional Summary (first paragraph)
+- [ ] Company's specific mission/product/technology mentioned in Professional Summary
+- [ ] If company has proprietary technology (e.g., "Altitude AI", "Platform Name"), MENTION IT in summary
+- [ ] If company references thought leaders (e.g., "Ray Dalio"), MENTION THEM in bullets or summary
+- [ ] At least 2-3 experience bullets draw parallels to company's domain/products
+- [ ] Technical skills section lists company's tech stack FIRST (if mentioned in job/research)
+- [ ] Professional Summary shows genuine excitement about THIS specific company
+- [ ] Language and tone match company culture (analyze research for formality level)
+
+**EXAMPLES OF STRONG COMPANY ALIGNMENT:**
+
+✅ "Thrilled to bring deep expertise in LLM orchestration to {company_name}'s Altitude AI platform, revolutionizing institutional investing through AI"
+
+✅ "Engineered time-series forecasting models analyzing macroeconomic indicators, directly applicable to {company_name}'s regime-based portfolio optimization approach inspired by Ray Dalio's research"
+
+✅ "Built RAG systems processing financial data at scale, aligned with {company_name}'s mission of democratizing sophisticated investment strategies"
+
+❌ "Excited to join your team and contribute to AI initiatives" (TOO GENERIC!)
+
+**If company research reveals specific products, values, or approaches, you MUST reference at least 2-3 of them throughout the resume.**
 
 **AUTHENTICITY WARNING:**
 - Only reference products/technologies you've actually worked with
@@ -487,7 +510,56 @@ Recruiters can tell when candidates have done their homework. Strategic alignmen
 **Note:** Generic resumes are easily identified. Even without deep company research, show you've crafted this resume specifically for this {job_title} position at {company_name}.
 """
 
+        # Add validation feedback section if this is a regeneration attempt
+        validation_feedback_section = ""
+        if 'validation_feedback' in job_analysis:
+            feedback_data = job_analysis['validation_feedback']
+            star_pct = feedback_data.get('star_percentage', 0)
+            forbidden_verbs = feedback_data.get('forbidden_verbs', [])
+            feedback_items = feedback_data.get('feedback', [])
+
+            validation_feedback_section = f"""
+# ⚠️ VALIDATION FEEDBACK FROM PREVIOUS ATTEMPT - CRITICAL FIXES REQUIRED
+
+**PREVIOUS ATTEMPT FAILED VALIDATION. YOU MUST ADDRESS THESE ISSUES:**
+
+## Previous Validation Results:
+- STAR Format: {star_pct}% (NEED 60%+ to pass)
+- Forbidden Verbs Found: {len(forbidden_verbs)} instances
+
+{chr(10).join(['- ' + item for item in feedback_items])}
+
+## CRITICAL ACTIONS REQUIRED FOR THIS ATTEMPT:
+
+1. **STAR FORMAT - INCREASE TO 60%+:**
+   - Every experience bullet MUST start with situation context
+   - Use openers: "When...", "Faced with...", "Motivated by...", "Diagnosed...", "Identified...", "Inherited..."
+   - Full format: Situation → Task → Action → Result
+   - Example: "When API response times degraded 400% causing user churn (S), diagnosed database query bottleneck (T), implemented connection pooling and query optimization (A), reducing latency 85% and recovering 200+ customers (R)"
+
+2. **FORBIDDEN VERBS - ELIMINATE ALL INSTANCES (CRITICAL!):**
+   - FORBIDDEN: led, managed, handled, worked on, developed, achieved, built, applied, analyzed, designed
+   - REQUIRED REPLACEMENTS:
+     * "designed" → "architected", "engineered", "crafted", "conceived"
+     * "achieved" → "delivered", "attained", "secured", "produced"
+     * "built" → "engineered", "constructed", "established", "created"
+     * "developed" → "engineered", "pioneered", "created", "established"
+     * "analyzed" → "investigated", "diagnosed", "evaluated", "examined"
+
+   **SPECIFIC VIOLATIONS FOUND IN PREVIOUS ATTEMPT:**
+   {chr(10).join(['   - ❌ Line ' + str(v['line_number']) + ': "' + v['context'][:80] + '..." → REPLACE "' + v['verb'] + '" immediately!' for v in forbidden_verbs[:5]]) if forbidden_verbs else ''}
+
+3. **VALIDATION WILL BE AUTOMATED:**
+   - A Python script will count your STAR format bullets
+   - A Python script will detect forbidden verbs
+   - You CANNOT fake the validation - it's code-based
+   - If you fail again, regeneration will be triggered
+
+**THIS IS A REGENERATION ATTEMPT. Focus specifically on fixing the issues above while maintaining all other quality standards.**
+"""
+
         prompt = f"""You are an expert ATS (Applicant Tracking System) resume writer with deep knowledge of how ATS systems parse, rank, and score resumes.
+{validation_feedback_section}
 
 # CRITICAL INSTRUCTION - READ CAREFULLY
 You MUST use ONLY the information from the candidate's profile below. Do NOT invent skills, experiences, projects, or qualifications that are not explicitly mentioned in their profile. Do NOT hallucinate or fabricate content. Your role is to REFORMAT and OPTIMIZE what exists, not to create new content.
@@ -567,6 +639,95 @@ Full Job Analysis:
    - Ensure Skills section is comprehensive and matches required/preferred skills
    - **Job Title Prominence**: Include the exact job title "{job_title}" prominently in the Professional Summary or Skills section to match ATS searches
 
+---
+
+# 🚨🚨🚨 CRITICAL: STAR FORMAT IS MANDATORY FOR 60-70% OF BULLETS 🚨🚨🚨
+
+**STOP AND READ THIS BEFORE WRITING ANY BULLETS:**
+
+You MUST write in STAR format (Situation + Task + Action + Result) for AT LEAST 60-70% of all experience bullets. This is the #1 differentiator that gets international students hired.
+
+**MANDATORY PRE-GENERATION STEP:**
+Before you write ANY content, you MUST:
+1. Count how many total experience bullets you plan to write across ALL projects/jobs
+2. Calculate 60-70% of that number
+3. Mark which specific bullets will use FULL STAR format
+4. Verify each marked bullet includes ALL 4 components: S+T+A+R
+
+**🚨 ABSOLUTE REQUIREMENT: EVERY BULLET MUST USE FULL STAR FORMAT 🚨**
+
+**DO NOT write bullets that are just "Action + Result". EVERY single bullet across ALL sections (Projects, Experience, Publications) MUST include Situation/Task context.**
+
+**STAR FORMAT TEMPLATE - USE THIS FOR EVERY BULLET:**
+
+**[Situation: What was the problem/challenge/context?] + [Task: What needed to be done?] + [Action: What YOU specifically did] + [Result: Quantified outcome with business impact]**
+
+**Start EVERY bullet with situation context using phrases like:**
+- "When [problem occurred]..."
+- "Faced with [challenge]..."
+- "Motivated by [gap/need]..."
+- "Identified [bottleneck/issue] where [impact]..."
+- "Diagnosed [problem] causing [negative impact]..."
+
+**NEVER start bullets with just the action verb. ALWAYS start with situation.**
+
+**CONCRETE EXAMPLES FOR COMMON PROJECT TYPES:**
+
+**Example 1 - RAG System:**
+❌ WRONG (No situation): "Built RAG system processing 100MB+ documents with 92% accuracy"
+✅ CORRECT (STAR): "When research team struggled to extract insights from 100MB+ of unstructured documents taking 2+ hours per query (S), engineered production-grade RAG system with FAISS vector database and custom embedding models (A), achieving 92% retrieval accuracy and reducing research time by 10x to under 12 seconds per query (R)"
+
+**Example 2 - Chatbot:**
+❌ WRONG (No situation): "Developed chatbot serving 1,000+ daily queries with 95% satisfaction"
+✅ CORRECT (STAR): "Inherited legacy customer support system with 24+ hour response times causing 40% customer churn (S), orchestrated GPT-4 and Claude through FastAPI backend to build scalable chatbot (A), serving 1,000+ daily queries with 95% satisfaction and reducing churn by 55% (R)"
+
+**Example 3 - Cost Optimization:**
+❌ WRONG (No situation): "Reduced API costs by 45% through caching optimization"
+✅ CORRECT (STAR): "Diagnosed API cost bottleneck consuming $450/month and threatening project budget viability (S), engineered intelligent caching layer with custom evaluation metrics (A), slashing costs by 45% while maintaining report quality and enabling scalability to 100+ concurrent users (R)"
+
+**Example 4 - Model Improvement:**
+❌ WRONG (No situation): "Achieved 89% prediction accuracy using ensemble methods"
+✅ CORRECT (STAR): "When individual ML models plateaued at 66% accuracy limiting clinical utility for hairfall prediction (S), designed ensemble learning pipeline combining Random Forest, XGBoost, and Neural Networks across 15,000+ patient records (A), boosting prediction accuracy to 89% and enabling early intervention protocols adopted by 3 dermatology clinics (R)"
+
+**Example 5 - Latency Reduction:**
+❌ WRONG (No situation): "Optimized response time by 60% through caching"
+✅ CORRECT (STAR): "Identified critical latency issue where 8+ second response times frustrated users and caused 35% abandonment rate (S), implemented intelligent caching and query preprocessing (A), reducing response time by 60% to sub-3-second latency, improving customer NPS from 42 to 68, and increasing engagement by 90% (R)"
+
+**Example 6 - Collaboration/Soft Skills Bullet:**
+❌ WRONG (No situation): "Collaborated with cross-functional research team to gather requirements"
+✅ CORRECT (STAR): "When initial RAG system failed to meet 3 departments' divergent needs causing 60% rejection rate (S), facilitated weekly requirement-gathering sessions with cross-functional research team spanning ML engineers, domain experts, and end users (A), synthesizing feedback into unified specification that achieved 95% stakeholder approval and 4.6/5.0 satisfaction rating (R)"
+
+**Example 7 - Documentation/Communication Bullet:**
+❌ WRONG (No situation): "Documented comprehensive API specifications adopted by 50+ students"
+✅ CORRECT (STAR): "When lack of documentation caused 40+ weekly support requests and 3+ hour onboarding time for new users (S), authored comprehensive API specifications with interactive examples and troubleshooting guides (A), reducing onboarding time by 75% to 45 minutes and cutting support requests by 80%, now adopted by 50+ graduate students (R)"
+
+**Example 8 - Learning/Initiative Bullet:**
+❌ WRONG (No situation): "Quickly mastered PyTorch through self-directed learning"
+✅ CORRECT (STAR): "When project required transformer architectures but team lacked PyTorch expertise threatening 2-month delay (S), self-taught PyTorch fundamentals through research papers and 40+ hours of deliberate practice in 6 weeks (A), becoming team's subject matter expert and delivering model ahead of schedule, now mentoring 3 junior engineers in the framework (R)"
+
+**🚨 MANDATORY COUNTING EXERCISE - DO THIS NOW:**
+
+**STEP 1:** Count total experience bullets you will write:
+- Project 1: [X] bullets
+- Project 2: [X] bullets
+- Project 3: [X] bullets
+- Publications: [X] bullets
+**TOTAL: [X] bullets**
+
+**STEP 2:** Calculate required STAR bullets:
+- 60% threshold: [TOTAL] × 0.6 = [X] bullets MUST be STAR
+- 70% threshold: [TOTAL] × 0.7 = [X] bullets MUST be STAR
+**MINIMUM REQUIRED: [X] STAR-format bullets**
+
+**STEP 3:** Mark which bullets will be STAR format (use ⭐):
+- Project 1: ⭐ ⭐ [regular] ⭐
+- Project 2: ⭐ ⭐ ⭐ [regular]
+- Project 3: ⭐ ⭐ ⭐ ⭐
+
+**STEP 4:** Write each marked bullet using EXACT STAR template above
+
+---
+
 **🚨 MICROSOFT RECRUITER INSIGHT: USE STAR METHOD FOR STORYTELLING 🚨**
 
 **THIS IS CRITICAL**: Generic bullet points get ignored. Microsoft recruiters specifically look for STAR format (Situation, Task, Action, Result) to understand the full context of your achievements.
@@ -595,7 +756,22 @@ Full Job Analysis:
 3. **Impact**: Results are tied to business/user outcomes, not just technical metrics
 4. **Memorability**: Stories stick in recruiters' minds; generic bullets blur together
 
-**REQUIRED**: At least 60-70% of your experience bullets MUST use STAR format. This is what separates exceptional candidates from average ones.
+**CRITICAL ENFORCEMENT**: You MUST apply STAR format to a MINIMUM of 60-70% of all experience bullets. This is NON-NEGOTIABLE.
+
+**HOW TO ACHIEVE 60-70% STAR FORMAT**:
+- Count your total experience bullets across all jobs/projects
+- If you have 15 bullets, AT LEAST 9-10 MUST use STAR format
+- If you have 20 bullets, AT LEAST 12-14 MUST use STAR format
+- If you have 10 bullets, AT LEAST 6-7 MUST use STAR format
+
+**STAR FORMAT CHECKLIST - VERIFY BEFORE SUBMITTING**:
+- [ ] Counted total experience bullets across all sections
+- [ ] Calculated 60-70% threshold (multiply total bullets by 0.6 and 0.7)
+- [ ] Verified at least that many bullets include Situation/Task context
+- [ ] Each STAR bullet clearly shows: problem/context → your action → measurable outcome
+- [ ] Remaining 30-40% bullets can be shorter but still impactful
+
+**THIS IS WHAT SEPARATES EXCEPTIONAL CANDIDATES FROM AVERAGE ONES.**
 
 **🚨 AVOID GENERIC ACTION VERBS - MICROSOFT'S #1 PET PEEVE 🚨**
 
@@ -613,6 +789,11 @@ Full Job Analysis:
 ❌ Involved in
 ❌ Participated in
 ❌ Contributed to
+❌ Achieved (generic - use Delivered, Attained, Unlocked instead)
+❌ Built (generic - use Engineered, Architected, Constructed instead)
+❌ Applied (generic - use Deployed, Implemented, Integrated instead)
+❌ Analyzed (generic - use Diagnosed, Investigated, Evaluated instead)
+❌ Designed (overused - use Architected, Engineered, Crafted instead)
 
 **These verbs are on EVERY resume. Using them makes you blend in with 500 other applicants.**
 
@@ -651,6 +832,48 @@ Full Job Analysis:
 ✅ SPECIFIC: "Engineered ensemble learning pipeline combining 3 ML algorithms, boosting prediction accuracy from 66% to 89%"
 
 **RULE**: If you can replace your verb with "worked on" and it means the same thing, your verb is too generic. Choose a verb that describes EXACTLY what you did.
+
+---
+
+# 🚨🚨🚨 ZERO TOLERANCE FOR FORBIDDEN VERBS 🚨🚨🚨
+
+**ABSOLUTE PROHIBITION - READ THIS CAREFULLY:**
+
+The following 16 verbs are COMPLETELY BANNED from this resume. Using even ONE will result in AUTOMATIC REJECTION:
+
+**FORBIDDEN VERBS (0% ALLOWED):**
+1. Led → USE: Orchestrated, Spearheaded, Championed, Steered
+2. Managed → USE: Orchestrated, Oversaw, Directed, Coordinated
+3. Handled → USE: Executed, Processed, Resolved, Coordinated
+4. Worked on → USE: Engineered, Architected, Developed (only if no alternative)
+5. Developed → USE: Engineered, Architected, Pioneered, Crafted
+6. Responsible for → USE: Owned, Drove, Executed, Delivered
+7. Helped with → USE: Enabled, Facilitated, Supported, Contributed
+8. Assisted with → USE: Collaborated on, Supported, Enabled
+9. Involved in → USE: Contributed to, Participated in, Engaged with
+10. Participated in → USE: Engaged in, Joined, Took part in
+11. Contributed to → USE: Delivered, Produced, Generated
+12. Achieved → USE: Delivered, Attained, Unlocked, Realized
+13. **Built** → USE: **Engineered, Architected, Constructed, Established**
+14. **Applied** → USE: **Deployed, Implemented, Integrated, Leveraged**
+15. **Analyzed** → USE: **Diagnosed, Investigated, Evaluated, Examined**
+16. **Designed** → USE: **Architected, Engineered, Crafted, Conceived**
+
+**🚨 CRITICAL: "Built", "Designed", "Developed", "Applied", "Analyzed" appear most frequently in AI/ML resumes. You MUST replace every instance.**
+
+**REPLACEMENT EXAMPLES:**
+- ❌ "Built RAG system" → ✅ "Engineered RAG system" or "Architected RAG pipeline"
+- ❌ "Designed ensemble model" → ✅ "Architected ensemble learning framework"
+- ❌ "Developed chatbot" → ✅ "Engineered conversational AI platform"
+- ❌ "Applied NLP techniques" → ✅ "Deployed NLP methods" or "Implemented transformer-based approaches"
+- ❌ "Analyzed 100+ datasets" → ✅ "Investigated 100+ datasets" or "Evaluated patterns across 100+ datasets"
+
+**FINAL VERIFICATION STEP:**
+After writing the ENTIRE resume, search (CTRL+F) for EVERY forbidden verb listed above. If you find even ONE instance, immediately rewrite that sentence with an approved alternative.
+
+**If forbidden verbs remain after this check, the resume FAILS and must not be submitted.**
+
+---
 
 **🚨 MANDATORY: ADD PERSONAL SECTION TO SHOW WHO YOU ARE 🚨**
 
@@ -1042,10 +1265,13 @@ You MUST include 2-3 examples from EACH category:
 - [ ] Teamwork & Collaboration (2-3 examples)
 **Target: 10-15 total soft skill examples throughout the resume**
 
-## ✅ COMPANY ALIGNMENT REQUIREMENTS:
-- [ ] Company name "{company_name}" mentioned in Professional Summary
-- [ ] At least 1-2 references to company products/values in bullets (if research available)
-- [ ] Technical skills prioritize company's known tech stack
+## ✅ COMPANY ALIGNMENT REQUIREMENTS (MANDATORY):
+- [ ] Company name "{company_name}" mentioned BY NAME in Professional Summary
+- [ ] Company's proprietary technology/platform mentioned (e.g., "Altitude AI") if applicable
+- [ ] Thought leaders or methodologies mentioned in job posting referenced (e.g., "Ray Dalio")
+- [ ] At least 2-3 experience bullets draw parallels to company's domain/products
+- [ ] Technical skills section lists company's tech stack FIRST (if mentioned in job/research)
+- [ ] Professional Summary shows genuine excitement about THIS specific company (not generic)
 
 ## ✅ BASIC RESUME REQUIREMENTS:
 - [ ] Professional Summary is 3-4 lines and mentions the role
@@ -1055,23 +1281,154 @@ You MUST include 2-3 examples from EACH category:
 - [ ] All sections from profile preserved (Publications, Awards, etc.)
 
 ## ✅ MICROSOFT RECRUITER REQUIREMENTS (DIFFERENTIATION):
-- [ ] 60-70% of bullets use STAR format (Situation + Task + Action + Result)
-- [ ] NO generic action verbs (led, managed, handled, worked on, developed)
-- [ ] Using creative, specific action verbs from provided list
-- [ ] Professional Summary is CONVERSATIONAL, not robotic (no buzzwords)
+
+**STAR FORMAT (NON-NEGOTIABLE):**
+- [ ] COUNTED total experience bullets: _____ bullets
+- [ ] CALCULATED 60% threshold: _____ × 0.6 = _____ STAR bullets required
+- [ ] CALCULATED 70% threshold: _____ × 0.7 = _____ STAR bullets required
+- [ ] VERIFIED each STAR bullet includes: Situation + Task + Action + Result
+- [ ] MINIMUM _____ bullets use FULL STAR format (60-70% of total)
+
+**FORBIDDEN VERBS (ZERO TOLERANCE):**
+- [ ] VERIFIED resume contains ZERO instances of: Led, Managed, Handled, Worked on, Developed
+- [ ] VERIFIED resume contains ZERO instances of: Achieved, Built, Applied, Analyzed, Designed
+- [ ] VERIFIED resume contains ZERO instances of: Responsible for, Helped, Assisted, Involved, Participated, Contributed
+- [ ] EVERY bullet uses creative, specific action verbs from provided list
+
+**OTHER REQUIREMENTS:**
+- [ ] Professional Summary is CONVERSATIONAL, not robotic (no "results-driven", "leverage", "synergize")
 - [ ] "WHAT DRIVES ME / BEYOND WORK" section included (MANDATORY)
 - [ ] Personal section shows genuine interests and cultural fit
 
+**🚨 FINAL PRE-SUBMISSION VERIFICATION - DO NOT SKIP THIS 🚨**
+
+**BEFORE YOU OUTPUT THE RESUME, YOU MUST MANUALLY VERIFY:**
+
+**STEP 1: COUNT ALL BULLETS**
+- Total experience bullets (all sections): _____ bullets
+- Calculate 60%: _____ × 0.6 = _____ STAR bullets required minimum
+- Calculate 70%: _____ × 0.7 = _____ STAR bullets target
+
+**STEP 2: VERIFY STAR FORMAT**
+- Go through EVERY bullet and mark those with full S+T+A+R
+- Count marked bullets: _____ STAR bullets
+- Calculate percentage: _____ ÷ _____ = _____%
+- **IF percentage < 60%, STOP and add situation context to more bullets**
+
+**STEP 3: SEARCH FOR FORBIDDEN VERBS**
+Use CTRL+F to search for each forbidden verb:
+- [ ] Built - count: _____ (MUST BE 0)
+- [ ] Developed - count: _____ (MUST BE 0)
+- [ ] Designed - count: _____ (MUST BE 0)
+- [ ] Applied - count: _____ (MUST BE 0)
+- [ ] Analyzed - count: _____ (MUST BE 0)
+- [ ] Achieved - count: _____ (MUST BE 0)
+- [ ] Led, Managed, Handled - count: _____ (MUST BE 0)
+
+**IF ANY FORBIDDEN VERB COUNT > 0, you MUST rewrite those bullets before proceeding.**
+
+**STEP 4: COMPANY CUSTOMIZATION CHECK**
+- [ ] Company name mentioned in Professional Summary
+- [ ] Proprietary tech/platform mentioned (if applicable)
+- [ ] Thought leader referenced (if in job posting)
+- [ ] 2-3 bullets draw parallels to company domain
+
 **IF ANY CHECKBOX ABOVE IS UNCHECKED, DO NOT GENERATE THE RESUME YET!**
 
-Go back and ensure ALL requirements are met, especially:
-1. U.S. Context in EVERY organization name
-2. ALL 5 soft skill categories represented with 2-3 examples each
-3. STAR format in 60-70% of bullets
-4. NO generic action verbs
-5. Personal section included with authentic interests
+**MINIMUM REQUIREMENTS FOR SUBMISSION:**
+1. ✅ STAR FORMAT: ≥ 60% of all bullets (minimum 60%, target 70%)
+2. ✅ FORBIDDEN VERBS: = 0 instances (zero tolerance)
+3. ✅ COMPANY CUSTOMIZATION: All 4 items checked
+4. ✅ U.S. CONTEXT: Every organization has context in parentheses
+5. ✅ PERSONAL SECTION: "WHAT DRIVES ME" included
+6. ✅ SOFT SKILLS: 10-15 examples across 5 categories
 
-Generate the ATS-optimized resume now (resume content only, no additional notes):"""
+---
+
+# 🚨🚨🚨 ULTRA-STRICT FINAL GENERATION INSTRUCTIONS 🚨🚨🚨
+
+**YOU ARE NOW ENTERING THE GENERATION PHASE. READ THESE INSTRUCTIONS CAREFULLY:**
+
+## MANDATORY STAR FORMAT FOR EVERY BULLET TYPE
+
+**YOU MUST write AT LEAST 60-70% of ALL bullets using FULL STAR format.**
+
+**SPECIFIC REQUIREMENTS BY SECTION:**
+
+### EXPERIENCE/PROJECTS BULLETS:
+- **PRIMARY BULLETS (first bullet of each project):** 100% MUST use FULL STAR format
+- **SECONDARY BULLETS (remaining bullets):** At least 40% MUST use FULL STAR format
+- **Start EVERY primary bullet with:** "When...", "Faced with...", "Motivated by...", "Diagnosed...", "Identified..."
+
+### PUBLICATION BULLETS:
+- **At least 80% MUST use FULL STAR format**
+- Publications show research impact - context is critical
+
+### SOFT SKILL BULLETS (collaboration, documentation, etc.):
+- **At least 30% MUST use FULL STAR format**
+- Even soft skills need context
+
+## AUTO-REWRITE PROTOCOL
+
+**AFTER you write each bullet, immediately check:**
+1. Does it start with Situation context? ("When...", "Faced with...", etc.)
+2. If NO → IMMEDIATELY REWRITE adding situation context
+
+**Example auto-rewrite:**
+- ❌ FIRST DRAFT: "Orchestrated experiments processing 500B+ tokens"
+- ✅ AUTO-REWRITE: "When research required unprecedented scale to validate emotional learning hypotheses (S), orchestrated experiments processing 500B+ tokens across distributed GPU clusters (A), establishing new benchmarks for emotion-aware AI systems (R)"
+
+## FORBIDDEN VERB ELIMINATION PROTOCOL
+
+**AFTER you write the complete resume, run this check:**
+
+Search for these verbs: Built, Developed, Designed, Applied, Analyzed, Achieved, Led, Managed, Handled
+
+**FOR EACH INSTANCE FOUND:**
+- Immediately replace with approved alternative:
+  - Built → Engineered / Architected
+  - Developed → Engineered / Pioneered / Crafted
+  - Designed → Architected / Engineered / Crafted
+  - Applied → Deployed / Implemented / Integrated
+  - Analyzed → Diagnosed / Investigated / Evaluated
+  - Achieved → Delivered / Attained / Unlocked
+
+## SELF-VALIDATION CHECKLIST
+
+**BEFORE YOU OUTPUT THE RESUME, YOU MUST:**
+
+**STEP 1: COUNT TOTAL BULLETS**
+Count EVERY bullet across ALL sections: _____ total bullets
+
+**STEP 2: COUNT STAR FORMAT BULLETS**
+Go through resume and mark bullets with full S+T+A+R: _____ STAR bullets
+
+**STEP 3: CALCULATE PERCENTAGE**
+_____ STAR bullets ÷ _____ total bullets = _____%
+
+**STEP 4: VALIDATE**
+- If percentage < 60% → **STOP. Go back and add situation context to more bullets until ≥ 60%**
+- If percentage ≥ 60% → ✅ PROCEED
+
+**STEP 5: SEARCH FORBIDDEN VERBS**
+Search entire resume for: Built, Developed, Designed, Applied, Analyzed, Achieved
+- Count found: _____ instances
+- If count > 0 → **STOP. Replace every instance with approved alternative**
+- If count = 0 → ✅ PROCEED
+
+**STEP 6: FINAL VALIDATION**
+- [ ] STAR format ≥ 60%
+- [ ] Forbidden verbs = 0
+- [ ] Company name in summary
+- [ ] Personal section included
+- If ALL boxes checked → ✅ OUTPUT RESUME
+- If ANY box unchecked → **DO NOT OUTPUT. Fix issues first.**
+
+---
+
+**NOW GENERATE THE RESUME FOLLOWING ALL INSTRUCTIONS ABOVE.**
+
+Generate the ATS-optimized resume now (resume content only, no scorecard or validation notes):"""
 
         return prompt
 
@@ -1123,6 +1480,126 @@ Generate the ATS-optimized resume now (resume content only, no additional notes)
                 'pass_probability': 0,
                 'processing_time': 0
             }
+
+    def generate_validated_resume(
+        self,
+        profile_text,
+        job_analysis,
+        company_research=None,
+        user_identifier=None,
+        max_validation_retries=3
+    ):
+        """
+        Generate resume with automatic validation and regeneration
+
+        Args:
+            profile_text: Raw text from Profile.pdf
+            job_analysis: Analyzed job description
+            company_research: Optional company research
+            user_identifier: User/IP for logging
+            max_validation_retries: Maximum regeneration attempts if validation fails
+
+        Returns:
+            dict with resume content, validation results, and attempt info
+        """
+        company_name = job_analysis.get("company_name", "")
+        attempts = []
+
+        for attempt in range(max_validation_retries):
+            print(f"\n{'='*60}")
+            print(f"Resume Generation Attempt {attempt + 1}/{max_validation_retries}")
+            print(f"{'='*60}\n")
+
+            # Generate resume
+            result = self.generate_resume(
+                profile_text,
+                job_analysis,
+                company_research,
+                user_identifier
+            )
+
+            if not result['success']:
+                attempts.append({
+                    'attempt': attempt + 1,
+                    'success': False,
+                    'error': result.get('error', 'Unknown error')
+                })
+                continue
+
+            # Validate generated resume
+            print("\nValidating resume against Microsoft recruiter requirements...")
+            validation_result = self.resume_validator.validate_resume(
+                result['content'],
+                company_name=company_name
+            )
+
+            # Print validation report
+            self.resume_validator.print_validation_report(validation_result)
+
+            attempts.append({
+                'attempt': attempt + 1,
+                'success': True,
+                'validation': validation_result
+            })
+
+            # Check if validation passed
+            if validation_result['overall_pass']:
+                print(f"\n✅ Resume PASSED validation on attempt {attempt + 1}")
+                result['validation'] = validation_result
+                result['attempts'] = attempts
+                result['final_attempt'] = attempt + 1
+                return result
+
+            # If not last attempt, prepare for regeneration
+            if attempt < max_validation_retries - 1:
+                print(f"\n⚠️ Resume FAILED validation. Regenerating (attempt {attempt + 2}/{max_validation_retries})...")
+
+                # Add validation feedback to job_analysis for next attempt
+                job_analysis['validation_feedback'] = {
+                    'star_percentage': validation_result['star_percentage'],
+                    'forbidden_verbs': validation_result['forbidden_verbs_found'],
+                    'feedback': validation_result['feedback']
+                }
+            else:
+                print(f"\n⚠️ Maximum validation attempts reached.")
+
+                # If STAR format passes but forbidden verbs exist, apply auto-fix
+                if (validation_result['passes_star_requirement'] and
+                    not validation_result['passes_verb_requirement'] and
+                    validation_result['forbidden_verb_count'] <= 5):
+
+                    print(f"\n🔧 STAR format PASSED but {validation_result['forbidden_verb_count']} forbidden verbs found.")
+                    print("   Applying automatic verb replacement...")
+
+                    # Auto-fix forbidden verbs
+                    fixed_content = self.resume_validator.auto_fix_forbidden_verbs(result['content'])
+
+                    # Re-validate fixed content
+                    fixed_validation = self.resume_validator.validate_resume(fixed_content, company_name=company_name)
+
+                    print(f"\n📋 Post-Fix Validation:")
+                    print(f"   - STAR Format: {fixed_validation['star_percentage']}%")
+                    print(f"   - Forbidden Verbs: {fixed_validation['forbidden_verb_count']}")
+
+                    if fixed_validation['overall_pass']:
+                        print(f"\n✅ Auto-fix SUCCESSFUL! Resume now passes all requirements.")
+                        result['content'] = fixed_content
+                        result['validation'] = fixed_validation
+                        result['attempts'] = attempts
+                        result['final_attempt'] = f"{attempt + 1} (auto-fixed)"
+                        result['auto_fixed'] = True
+                        return result
+                    else:
+                        print(f"\n⚠️ Auto-fix applied but validation still failing. Returning original attempt.")
+
+                result['validation'] = validation_result
+                result['attempts'] = attempts
+                result['final_attempt'] = attempt + 1
+                result['auto_fixed'] = False
+                return result
+
+        # Should not reach here, but return last result as fallback
+        return result
 
     def generate_resume_with_retry(
         self,
