@@ -82,10 +82,16 @@ API_QUICK_REFERENCE.md
 MIGRATION_COMPLETE.md
 MIGRATION_ARCHITECTURE.md
 
-# Test resumes
+# Test resumes and test files
 test_resume_output.md
 adobe_resume_modern.md
 test_actual_resume.py
 test_resume_fixes.py
 test_project_selection.py
+test_universal_selection.py
+test_integrated_resume.py
+test_complete_system.py
 harvey_nash_resume.md
+harvey_nash_resume_filtered.md
+FILTERING_COMPARISON.md
+SYSTEM_TEST_REPORT.md

@@ -37,6 +37,9 @@ from src.utils.voice_analyzer import VoiceAnalyzer
 # Import resume validator for quality enforcement
 from src.utils.resume_validator import ResumeValidator
 
+# Import project selector for intelligent filtering
+from src.utils.project_selector import ProjectSelector
+
 load_dotenv()
 
 class ResumeGenerator:
@@ -98,6 +101,9 @@ class ResumeGenerator:
 
         # Initialize resume validator for quality enforcement
         self.resume_validator = ResumeValidator(min_star_percentage=60.0)
+
+        # Initialize project selector for intelligent filtering
+        self.project_selector = ProjectSelector(max_projects=3)
 
     def _load_ats_knowledge(self, knowledge_path):
         """Load ATS knowledge base"""
@@ -1481,6 +1487,59 @@ Generate the ATS-optimized resume now (resume content only, no scorecard or vali
                 'processing_time': 0
             }
 
+    def _extract_profile_sections(self, profile_text):
+        """
+        Extract different sections from profile text
+
+        Args:
+            profile_text: Raw profile text
+
+        Returns:
+            dict with sections (header, education, skills, etc.)
+        """
+        import re
+
+        sections = {}
+        lines = profile_text.split('\n')
+
+        current_section = 'header'
+        current_content = []
+
+        # Common section headers
+        section_keywords = {
+            'education': ['EDUCATION', 'ACADEMIC', 'DEGREE'],
+            'experience': ['EXPERIENCE', 'PROJECTS', 'WORK'],
+            'skills': ['TECHNICAL SKILLS', 'SKILLS', 'TECHNOLOGIES'],
+            'publications': ['PUBLICATIONS', 'PAPERS', 'RESEARCH'],
+            'awards': ['AWARDS', 'HONORS', 'ACHIEVEMENTS'],
+            'certifications': ['CERTIFICATIONS', 'CERTIFICATES']
+        }
+
+        for line in lines:
+            line_upper = line.strip().upper()
+
+            # Check if this is a section header
+            section_found = None
+            for section_name, keywords in section_keywords.items():
+                if any(keyword in line_upper for keyword in keywords):
+                    section_found = section_name
+                    break
+
+            if section_found:
+                # Save previous section
+                if current_content:
+                    sections[current_section] = '\n'.join(current_content).strip()
+                current_section = section_found
+                current_content = []
+            else:
+                current_content.append(line)
+
+        # Save last section
+        if current_content:
+            sections[current_section] = '\n'.join(current_content).strip()
+
+        return sections
+
     def generate_validated_resume(
         self,
         profile_text,
@@ -1504,6 +1563,65 @@ Generate the ATS-optimized resume now (resume content only, no scorecard or vali
         """
         company_name = job_analysis.get("company_name", "")
         attempts = []
+
+        # Apply intelligent project selection BEFORE generating resume
+        print("\n" + "="*60)
+        print("INTELLIGENT PROJECT SELECTION")
+        print("="*60)
+
+        selection_result = self.project_selector.select_top_projects(
+            profile_text=profile_text,
+            job_analysis=job_analysis,
+            always_include_publications=True
+        )
+
+        # Print selection report
+        print(self.project_selector.generate_selection_report(selection_result))
+
+        # Reconstruct profile_text with only selected projects
+        # Extract non-project sections from original profile
+        profile_sections = self._extract_profile_sections(profile_text)
+
+        # Build filtered profile with selected projects only
+        filtered_profile_parts = []
+
+        # Add header sections (name, email, phone, etc.)
+        if 'header' in profile_sections:
+            filtered_profile_parts.append(profile_sections['header'])
+
+        # Add education
+        if 'education' in profile_sections:
+            filtered_profile_parts.append("\nEDUCATION\n")
+            filtered_profile_parts.append(profile_sections['education'])
+
+        # Add selected experiences/projects
+        filtered_profile_parts.append("\nEXPERIENCE & PROJECTS\n")
+        for item in selection_result['selected_projects']:
+            if not item.get('is_publication', False):
+                project = item['project']
+                filtered_profile_parts.append(f"\n{project['name']}\n{project['description']}\n")
+
+        # Add ALL publications (always included)
+        if selection_result['publication_count'] > 0:
+            filtered_profile_parts.append("\nPUBLICATIONS\n")
+            for item in selection_result['selected_projects']:
+                if item.get('is_publication', False):
+                    project = item['project']
+                    filtered_profile_parts.append(f"\n{project['name']}\n{project['description']}\n")
+
+        # Add technical skills
+        if 'skills' in profile_sections:
+            filtered_profile_parts.append("\nTECHNICAL SKILLS\n")
+            filtered_profile_parts.append(profile_sections['skills'])
+
+        # Reconstruct filtered profile
+        filtered_profile_text = '\n'.join(filtered_profile_parts)
+
+        print(f"\n✓ Profile filtered: Using {selection_result['selected_count']} most relevant experiences")
+        print(f"✓ Publications: All {selection_result['publication_count']} included")
+
+        # Use filtered profile for resume generation
+        profile_text = filtered_profile_text
 
         for attempt in range(max_validation_retries):
             print(f"\n{'='*60}")
